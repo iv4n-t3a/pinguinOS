@@ -6,7 +6,7 @@ build/mbr.o: mbr.S build
 	as -o build/mbr.o mbr.S
 
 run: build/mbr.img
-	qemu-system-i386 -hda build/mbr.img
+	qemu-system-i386 -drive file=build/mbr.img,format=raw
 .PHONY: run
 
 clean:
