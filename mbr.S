@@ -80,13 +80,11 @@ check_partitions:
 
 error:
     PRINTLN $error_message
-error_hang:
-    jmp error_hang
+    jmp .
 
 unimplemented:
     PRINTLN $unimplemented_message
-unimplemented_hang:
-    jmp unimplemented_hang
+    jmp .
 
 print:
     mov $0x0E, %ah
