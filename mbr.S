@@ -1,16 +1,33 @@
 .code16
 .global _start
 
-.macro LOAD msg
+////////////////////////////////////////////////////////////
+////////// Main code helper macros
+
+.macro PRINTLN msg
     xor %ax, %ax
     mov %ax, %ds
     mov \msg, %si
+    call println
 .endm
+
+.macro PRINT msg
+    xor %ax, %ax
+    mov %ax, %ds
+    mov \msg, %si
+    call print
+.endm
+
+////////////////////////////////////////////////////////////
+////////// Mbr code
 
 _start:
     cli
-    LOAD $copying_lower_message
-    call println
+
+save_boot_drive:
+    mov %dl, boot_drive
+    call print_boot_drive
+    PRINTLN $copying_lower_message
 
 setup_segment_registers:
     xor %ax, %ax
@@ -34,28 +51,44 @@ low_start:
     jne error
 
     sti
-    mov $low_start_success_message, %si
-    call println
+    PRINTLN $low_start_success_message
+
+check_partitions:
     call unimplemented
 
-error:
-    LOAD $error_message
-    call println
-error_hang:
-    jmp error_hang
-
-unimplemented:
-    LOAD $unimplemented_message
-    call println
-unimplemented_hang:
-    jmp unimplemented_hang
+////////////////////////////////////////////////////////////
+////////// Helper functions helper macros
 
 .macro PCHAR char
     mov \char, %al
     int $0x10
 .endm
 
-println:
+.macro PDIGIT digit
+    mov \digit, %al
+
+    add $6, %al
+    xor $0xf, %al
+    sub $6, %al
+
+    add $'0', %al
+    int $0x10
+.endm
+
+////////////////////////////////////////////////////////////
+////////// Helper functions
+
+error:
+    PRINTLN $error_message
+error_hang:
+    jmp error_hang
+
+unimplemented:
+    PRINTLN $unimplemented_message
+unimplemented_hang:
+    jmp unimplemented_hang
+
+print:
     mov $0x0E, %ah
     mov $0, %bh
 
@@ -65,17 +98,34 @@ println:
     PCHAR $'R'
     PCHAR $':'
     PCHAR $' '
-
-println_loop:
+print_loop:
     lodsb
     test %al, %al
-    je println_done
+    je print_done
     int $0x10
-    jmp println_loop
+    jmp print_loop
+print_done:
+    ret
+
+println:
+    call print
 println_done:
     PCHAR $'\r'
     PCHAR $'\n'
     ret
+
+print_boot_drive:
+    PRINT $boot_drive_message
+    PCHAR $'0'
+    PCHAR $'x'
+    PCHAR $'8'
+    mov boot_drive, %al
+    sub $0x80, %al
+    PDIGIT %al
+    jmp println_done
+
+////////////////////////////////////////////////////////////
+////////// Messages
 
 copying_lower_message:
     .asciz "Copying to lower address..."
@@ -88,6 +138,18 @@ error_message:
 
 unimplemented_message:
     .asciz "Further boot unimplemented."
+
+boot_drive_message:
+    .asciz "Booting from drive "
+
+////////////////////////////////////////////////////////////
+////////// Variables
+
+boot_drive:
+    .int 0
+
+////////////////////////////////////////////////////////////
+////////// MBR signature
 
 .org 510
 .word 0xAA55
