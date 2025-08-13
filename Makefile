@@ -1,7 +1,7 @@
 build/bootable.dd: build/mbr.img build/vbr.img
-	dd if=/dev/zero     of=$@            bs=1048576 count=128
-	dd if=build/mbr.img of=$@            bs=512     count=1    conv=notrunc
-	dd if=build/vbr.img of=$@ seek=1     bs=512     count=1    conv=notrunc
+	dd if=/dev/zero     of=$@        bs=1048576 count=128
+	dd if=build/mbr.img of=$@        bs=512     count=1    conv=notrunc
+	dd if=build/vbr.img of=$@ seek=1 bs=512     count=1    conv=notrunc
 
 build/mbr.img: build/mbr.o boot/mbr.ld
 	mkdir -p build
