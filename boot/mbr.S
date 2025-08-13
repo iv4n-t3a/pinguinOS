@@ -19,7 +19,7 @@
 .endm
 
 ////////////////////////////////////////////////////////////
-////////// Mbr code
+////////// MBR code
 
 _start:
     cli
@@ -54,6 +54,55 @@ low_start:
     PRINTLN $low_start_success_message
 
 check_partitions:
+    mov $PT1, %bx
+    mov $4, %cx
+
+check_partitions_loop:
+    mov (%bx), %al
+    test $0x80, %al
+    jz check_partitions_failure
+    call check_partitions_success
+
+check_partitions_failure:
+    add $0x10, %bx
+    dec %cx
+    jnz check_partitions_loop
+    call error
+
+check_partitions_success:
+    mov %bx, selected_partition
+
+read_vbr:
+    // Setup dapack
+    mov selected_partition, %bx
+    add $6, %bx
+
+.if 0
+    add $2, %bx
+    mov %bx, selected_partition_dapack_lower_LBA
+    add $2, %bx
+    mov %bx, selected_partition_dapack_lower_LBA+2
+    add $2, %bx
+    mov %bx, selected_partition_dapack_upper_LBA
+    add $2, %bx
+    mov %bx, selected_partition_dapack_upper_LBA+2
+.endif
+
+    // Setup BIOS call
+    mov $selected_partition_dapack, %si
+    mov $0x42, %ah
+    mov $boot_drive, %bx
+    mov (%bx), %dl
+    int $0x13
+    jc error
+
+jump_to_vbr:
+    cmpw $0xAA55, (0x7DFE)
+    jne error
+
+    mov selected_partition, %si
+    mov boot_drive, %di
+    ljmp $0, $0x7C00
     call unimplemented
 
 ////////////////////////////////////////////////////////////
@@ -146,8 +195,41 @@ boot_drive_message:
 boot_drive:
     .int 0
 
-////////////////////////////////////////////////////////////
-////////// MBR signature
+selected_partition:
+    .int 0
 
-.org 510
-.word 0xAA55
+selected_partition_dapack:
+    .byte  0x10        /* Size of packet */
+    .byte  0
+    .short 1           /* Number of sectors to transfer */
+    .int   0x7C00      /* Transfer buffer */
+selected_partition_dapack_lower_LBA:
+    .int   1
+selected_partition_dapack_upper_LBA:
+    .int   0
+
+////////////////////////////////////////////////////////////
+////////// Partition table
+
+.section .partition_table
+
+UID:
+  .fill 6, 1, 0
+PT1:
+  // Active testing partition
+  .byte 0x80  /* Boot indicator: Active */
+  .byte 0x00  /* Starting head */
+  .byte 0x01  /* Starting sector 1, cylinder high bits 0 */
+  .byte 0x00  /* Starting cylinder low bits */
+  .byte 0x83  /* Partition type: Linux */
+  .byte 0x01  /* Ending head */
+  .byte 0x00  /* Ending sector 63, cylinder high bits 3 */
+  .byte 0x00  /* Ending cylinder low bits */
+  .long 1     /* Starting LBA (sector 2048) */
+  .long 1     /* Number of sectors (approx. 100MB) */
+PT2:
+  .fill 16, 1, 0
+PT3:
+  .fill 16, 1, 0
+PT4:
+  .fill 16, 1, 0
