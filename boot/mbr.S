@@ -71,20 +71,10 @@ check_partitions_success:
     mov %bx, selected_partition
 
 read_vbr:
-    // Setup dapack
-    mov selected_partition, %bx
-    add $6, %bx
-
-.if 0
-    add $2, %bx
-    mov %bx, selected_partition_dapack_lower_LBA
-    add $2, %bx
-    mov %bx, selected_partition_dapack_lower_LBA+2
-    add $2, %bx
-    mov %bx, selected_partition_dapack_upper_LBA
-    add $2, %bx
-    mov %bx, selected_partition_dapack_upper_LBA+2
-.endif
+    mov 8(%bx), %ax
+    mov %ax, selected_partition_dapack_lower_LBA
+    mov 10(%bx), %ax
+    mov %ax, selected_partition_dapack_lower_LBA+2
 
     // Setup BIOS call
     mov $selected_partition_dapack, %si
@@ -196,7 +186,7 @@ selected_partition_dapack:
     .short 1           /* Number of sectors to transfer */
     .int   0x7C00      /* Transfer buffer */
 selected_partition_dapack_lower_LBA:
-    .int   1
+    .int   0
 selected_partition_dapack_upper_LBA:
     .int   0
 
