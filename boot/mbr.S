@@ -205,9 +205,9 @@ PT1:
   .byte 0x00  /* Starting cylinder low bits */
   .byte 0x83  /* Partition type: Linux */
   .byte 0x01  /* Ending head */
-  .byte 0x00  /* Ending sector 63, cylinder high bits 3 */
+  .byte 0x00  /* Ending sector */
   .byte 0x00  /* Ending cylinder low bits */
-  .long 1     /* Starting LBA (sector 2048) */
+  .long 1     /* Starting LBA */
   .long 1     /* Number of sectors (approx. 100MB) */
 PT2:
   .fill 16, 1, 0
