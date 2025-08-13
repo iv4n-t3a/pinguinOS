@@ -27,7 +27,6 @@ _start:
 save_boot_drive:
     mov %dl, boot_drive
     call print_boot_drive
-    PRINTLN $copying_lower_message
 
 setup_segment_registers:
     xor %ax, %ax
@@ -51,7 +50,6 @@ low_start:
     jne error
 
     sti
-    PRINTLN $low_start_success_message
 
 check_partitions:
     mov $PT1, %bx
@@ -173,12 +171,6 @@ print_boot_drive:
 
 ////////////////////////////////////////////////////////////
 ////////// Messages
-
-copying_lower_message:
-    .asciz "Copying to lower address..."
-
-low_start_success_message:
-    .asciz "Started at low_start."
 
 error_message:
     .asciz "Fatal error."
