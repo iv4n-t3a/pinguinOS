@@ -19,9 +19,37 @@
 .endm
 
 ////////////////////////////////////////////////////////////
-////////// VBR code
+////////// BPB (BIOS Parameter Block)
 
 _start:
+    jmp main
+    nop
+
+    .ascii "iv4n-t3a"     /* OEM identifier */
+    .word  512            /* Bytes per sector */
+    .byte  4              /* Sectors per cluster */
+    .word  4              /* Reserved sectors */
+    .byte  2              /* FAT count */
+    .word  512            /* Root directory entries */
+    .word  0              /* 16-bit total sectors for volume */
+    .byte  0xF8           /* Media descriptor type */
+    .word  256            /* Number of sectors per FAT */
+    .word  63             /* Sectors per track for int 0x13 */
+    .word  16             /* Number of heads for int 0x13 */
+    .int   1              /* LBA of the beginning of the partition */
+    .int   0x40000        /* 128Mb. 32-bit total sectors per volume. */
+// FAT16 Specific fields
+    .byte  0x80           /* Drive number */
+    .byte  0              /* Flags */
+    .byte  0x29           /* Signature */
+    .int   0              /* Volume serial number */
+    .ascii "NO NAME    "  /* Volume label string */
+    .ascii "FAT16   "     /* FAT type string representation */
+
+////////////////////////////////////////////////////////////
+////////// Executable code
+
+main:
     PRINTLN $vbr_successful_start_message
     call unimplemented
 
@@ -59,7 +87,7 @@ print:
     mov $0x0E, %ah
     mov $0, %bh
 
-    // Print 'MBR: ' preffix
+    // Print 'VBR: ' preffix
     PCHAR $'V'
     PCHAR $'B'
     PCHAR $'R'
