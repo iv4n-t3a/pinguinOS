@@ -35,6 +35,8 @@ setup_segment_registers:
     mov %ax, %ss
     mov %ax, %sp
 
+    mov $0, (0x7DFE)
+
 copy_mbr_lower:
     mov $0x0100, %cx
     mov $0x7C00, %si
