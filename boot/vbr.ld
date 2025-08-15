@@ -5,7 +5,7 @@ SECTIONS
     .text :
     {
         /* To analyze how much space is left */
-        FILL(0xc6)
+        FILL(0x90)
         *(.text)
         . = 0x1FE;
         SHORT(0xAA55)
