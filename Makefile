@@ -1,5 +1,5 @@
 build/bootable.dd: build/mbr.img build/vbr.img build/kernel.img
-	dd if=/dev/zero of=$@ bs=1048576 count=128
+	dd if=/dev/zero of=$@ bs=1048576 count=32
 	mkfs.fat -F 16 -S 512 -s 4 -R 1 -f 2 -r 512 --offset=1 $@
 	dd if=build/mbr.img of=$@        bs=512     count=1    conv=notrunc
 	dd if=build/vbr.img of=$@ seek=1 bs=512     count=1    conv=notrunc

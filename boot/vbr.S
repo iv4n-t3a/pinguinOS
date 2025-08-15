@@ -20,7 +20,7 @@ BPB_sectors_per_fat:       .word  256
 BPB_sectors_per_track:     .word  63 /* For int 0x13 */
 BPB_number_of_heads:       .word  16 /* For int 0x13 */
 BPB_part_begin_lba:        .int   1
-BPB_32_sectors_per_volume: .int   0x40000
+BPB_32_sectors_per_volume: .int   0x10000
 
 // FAT16 Specific
 BPB_drive_number:          .byte  0x80
@@ -49,13 +49,18 @@ BPB_FAT_type_as_string:    .ascii "FAT16   "
 .set DAP_starting_LBA_lower,       0x7E08
 .set DAP_starting_LBA_upper,       0x7E0C
 
-// Variables
+// Partition info
 .set fat_start_LBA,               0x7F10
 .set root_dir_start_LBA,          0x7F12
 .set root_dir_size,               0x7F14
-.set root_dir_not_loaded_sectors, 0x7F16
-.set root_dir_writting_address,   0x7F18
-.set root_dir_reading_LBA,        0x7F1A
+.set data_region_begin_LBA,       0x7F16
+// Load sectors from disk related
+.set disk_reading_sectors_left,   0x7F18
+.set disk_reading_dst,            0x7F1A
+.set disk_reading_LBA,            0x7F1C
+// Kernel load related
+.set kload_current_cluster,       0x7F20
+.set kload_write_iter,            0x7F22
 
 ////////////////////////////////////////////////////////////
 ////////// Executable code
@@ -66,7 +71,7 @@ main:
     mov %ax, %ds
     mov %ax, %es
     mov %ax, %ss
-    mov $0x7FFFF, %sp
+    mov $0xFFFF, %sp
     sti
 
 // BPB_reserved_sectors + BPB_part_begin_lba
@@ -100,49 +105,20 @@ calc_root_dir_size:
     div %cx
     mov %ax, (root_dir_size)
 
-load_root_directory:
-    mov (root_dir_size), %ax
-    mov %ax, (root_dir_not_loaded_sectors)
-    mov $root_dir_address, (root_dir_writting_address)
+// root_dir_start_LBA + root_dir_size
+calc_data_region_begin_LBA:
     mov (root_dir_start_LBA), %ax
-    mov %ax, (root_dir_reading_LBA)
+    mov (root_dir_size), %bx
+    add %bx, %ax
+    mov %ax, (data_region_begin_LBA)
 
-load_root_directory_loop:
-    mov  (root_dir_not_loaded_sectors), %ax
-    mov  (root_dir_writting_address),   %bx
-    mov  (root_dir_reading_LBA),        %cx
-
-    movb $0x10, (DAP_packet_size)
-    movb $0,    (DAP_zero)
-    mov  %ax,   (DAP_read_sectors)
-    mov  $0,    (DAP_transfer_buffer_segment)
-    mov  %bx,   (DAP_transfer_buffer_offset)
-    mov  %cx,   (DAP_starting_LBA_lower)
-    mov  $0,    (DAP_starting_LBA_upper)
-
-    mov $0x42, %ah
-    mov (BPB_drive_number), %dl
-    mov $DAP_address, %si
-
-    int $0x13
-
-    mov %ah, (DAP_zero)
-    jc error
-    mov (DAP_read_sectors), %ax  /* sectors actualy read */
-
-    sub %ax, (root_dir_not_loaded_sectors)
-    jz load_root_directory_loop_finish
-
-    mov (DAP_read_sectors), %ax
-    add %ax, (root_dir_reading_LBA)
-
-    mov (BPB_bytes_per_sector), %bx
-    mul %bx
-    add %ax, (root_dir_writting_address)
-
-    jmp load_root_directory_loop
-
-load_root_directory_loop_finish:
+load_root_dir:
+    mov (root_dir_size), %ax
+    mov %ax, (disk_reading_sectors_left)
+    mov $root_dir_address, (disk_reading_dst)
+    mov (root_dir_start_LBA), %ax
+    mov %ax, (disk_reading_LBA)
+    call load_segment_from_disk
 
 find_kernel_file:
     mov $root_dir_address, %bx
@@ -165,7 +141,38 @@ find_kernel_loop:
     jmp find_kernel_loop
 
 find_kernel_loop_finish:
-    jmp unimplemented
+
+load_kernel:
+    add $26, %bx
+    mov (%bx), %bx
+    mov %bx, (kload_current_cluster)
+
+    mov $kernel_address, (kload_write_iter)
+
+load_kernel_loop:
+    // lba = data_region_begin + (kload_current_cluster - 2) * BPB_sectors_per_cluster
+    mov (kload_current_cluster), %ax
+    sub 2, %ax
+    mov (BPB_sectors_per_cluster), %bx
+    mul %bx
+    add (data_region_begin_LBA), %ax
+    mov %ax, (disk_reading_LBA)
+
+    mov (kload_write_iter), %ax
+    mov %ax, (disk_reading_dst)
+
+    mov (BPB_sectors_per_cluster), %ax
+    mov %ax, (disk_reading_sectors_left)
+
+    call load_segment_from_disk
+
+    mov (kload_write_iter), %ax
+    mov (BPB_sectors_per_cluster), %bx
+    add %bx, %ax
+    mov %ax, (kload_write_iter)
+
+load_kernel_finish:
+    ljmp $0, $kernel_address
 
 ////////////////////////////////////////////////////////////
 ////////// Helper functions helper macros
@@ -196,6 +203,8 @@ error:
     PCHAR $'E'
     PCHAR $'R'
     PCHAR $'R'
+    PCHAR $'O'
+    PCHAR $'R'
     jmp .
 
 unimplemented:
@@ -204,6 +213,47 @@ unimplemented:
 
     PCHAR $'U'
     jmp .
+
+
+load_segment_from_disk:
+
+load_segment_from_disk_loop:
+    mov  (disk_reading_sectors_left), %ax
+    mov  (disk_reading_dst),          %bx
+    mov  (disk_reading_LBA),          %cx
+
+    movb $0x10, (DAP_packet_size)
+    movb $0,    (DAP_zero)
+    mov  %ax,   (DAP_read_sectors)
+    mov  $0,    (DAP_transfer_buffer_segment)
+    mov  %bx,   (DAP_transfer_buffer_offset)
+    mov  %cx,   (DAP_starting_LBA_lower)
+    mov  $0,    (DAP_starting_LBA_upper)
+
+    mov $0x42, %ah
+    mov (BPB_drive_number), %dl
+    mov $DAP_address, %si
+
+    int $0x13
+
+    mov %ah, (DAP_zero)
+    jc error
+    mov (DAP_read_sectors), %ax  /* sectors actualy read */
+
+    sub %ax, (disk_reading_sectors_left)
+    jz load_segment_from_disk_loop_finish
+
+    mov (DAP_read_sectors), %ax
+    add %ax, (disk_reading_LBA)
+
+    mov (BPB_bytes_per_sector), %bx
+    mul %bx
+    add %ax, (disk_reading_dst)
+
+    jmp load_segment_from_disk_loop
+
+load_segment_from_disk_loop_finish:
+    ret
 
 ////////////////////////////////////////////////////////////
 ////////// Constants
