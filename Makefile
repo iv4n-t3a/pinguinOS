@@ -27,12 +27,8 @@ build/kernel.o: kernel/kernel.S
 	as -o build/kernel.o kernel/kernel.S
 
 run: build/bootable.dd
-	qemu-system-i386 -drive file=build/bootable.dd,format=raw
+	qemu-system-i386 -nographic -drive file=build/bootable.dd,format=raw
 .PHONY: run
-
-gdb: build/bootable.dd
-	qemu-system-i386 -drive file=build/bootable.dd,format=raw -s -S
-.PHONY: gdb
 
 clean:
 	rm -r build/*
