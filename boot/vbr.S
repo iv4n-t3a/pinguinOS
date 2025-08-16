@@ -35,6 +35,7 @@ BPB_FAT_type_as_string:    .ascii "FAT16   "
 
 // General memory layout
 .set root_dir_address,   0x0500
+.set stack_begin,        0x7C00
 .set vbr_address,        0x7C00
 .set DAP_address,        0x7E00
 .set variables_address,  0x7F00
@@ -68,10 +69,11 @@ BPB_FAT_type_as_string:    .ascii "FAT16   "
 main:
     cli
     xor %ax, %ax
+    mov %ax, %cs
     mov %ax, %ds
     mov %ax, %es
     mov %ax, %ss
-    mov $0xFFFF, %sp
+    mov $stack_begin, %sp
     sti
 
 // BPB_reserved_sectors + BPB_part_begin_lba
@@ -118,6 +120,7 @@ load_root_dir:
     mov $root_dir_address, (disk_reading_dst)
     mov (root_dir_start_LBA), %ax
     mov %ax, (disk_reading_LBA)
+    mov $0,  (disk_reading_LBA + 2)
     call load_segment_from_disk
 
 find_kernel_file:
@@ -152,16 +155,20 @@ load_kernel:
 load_kernel_loop:
     // lba = data_region_begin + (kload_current_cluster - 2) * BPB_sectors_per_cluster
     mov (kload_current_cluster), %ax
-    sub 2, %ax
-    mov (BPB_sectors_per_cluster), %bx
+    sub $2, %ax
+    xor %dx, %dx
+    xor %bx, %bx
+    movb (BPB_sectors_per_cluster), %bl
     mul %bx
     add (data_region_begin_LBA), %ax
+    mov %dx, (disk_reading_LBA+2)
     mov %ax, (disk_reading_LBA)
 
     mov (kload_write_iter), %ax
     mov %ax, (disk_reading_dst)
 
-    mov (BPB_sectors_per_cluster), %ax
+    xor %ax, %ax
+    movb (BPB_sectors_per_cluster), %al
     mov %ax, (disk_reading_sectors_left)
 
     call load_segment_from_disk
@@ -214,21 +221,33 @@ unimplemented:
     PCHAR $'U'
     jmp .
 
+info:
+    mov $0x0E, %ah
+    mov $0, %bh
+
+    PCHAR $'I'
+    ret
 
 load_segment_from_disk:
 
 load_segment_from_disk_loop:
+    call info
     mov  (disk_reading_sectors_left), %ax
     mov  (disk_reading_dst),          %bx
-    mov  (disk_reading_LBA),          %cx
 
     movb $0x10, (DAP_packet_size)
     movb $0,    (DAP_zero)
     mov  %ax,   (DAP_read_sectors)
     mov  $0,    (DAP_transfer_buffer_segment)
     mov  %bx,   (DAP_transfer_buffer_offset)
-    mov  %cx,   (DAP_starting_LBA_lower)
+
+    mov  (disk_reading_LBA),          %ax
+    mov  (disk_reading_LBA + 2),      %bx
+
+    mov  %ax,   (DAP_starting_LBA_lower)
+    mov  %bx,   (DAP_starting_LBA_lower + 2)
     mov  $0,    (DAP_starting_LBA_upper)
+    mov  $0,    (DAP_starting_LBA_upper + 2)
 
     mov $0x42, %ah
     mov (BPB_drive_number), %dl
@@ -240,17 +259,6 @@ load_segment_from_disk_loop:
     jc error
     mov (DAP_read_sectors), %ax  /* sectors actualy read */
 
-    sub %ax, (disk_reading_sectors_left)
-    jz load_segment_from_disk_loop_finish
-
-    mov (DAP_read_sectors), %ax
-    add %ax, (disk_reading_LBA)
-
-    mov (BPB_bytes_per_sector), %bx
-    mul %bx
-    add %ax, (disk_reading_dst)
-
-    jmp load_segment_from_disk_loop
 
 load_segment_from_disk_loop_finish:
     ret
