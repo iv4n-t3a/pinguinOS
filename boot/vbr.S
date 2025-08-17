@@ -153,6 +153,7 @@ load_kernel:
     mov $kernel_address, (kload_write_iter)
 
 load_kernel_loop:
+    call info
     // lba = data_region_begin + (kload_current_cluster - 2) * BPB_sectors_per_cluster
     mov (kload_current_cluster), %ax
     sub $2, %ax
@@ -177,6 +178,25 @@ load_kernel_loop:
     mov (BPB_sectors_per_cluster), %bx
     add %bx, %ax
     mov %ax, (kload_write_iter)
+
+    mov (kload_current_cluster), %ax
+    shl $1, %ax
+    mov $root_dir_address, %bx
+    add %ax, %bx
+    mov (%bx), %ax
+
+    cmp $0xFFF8, %ax
+    je unimplemented
+    cmp $0xFFFF, %ax
+    je unimplemented
+    cmp $0xF8FF, %ax
+    je unimplemented
+    jmp error
+
+    cmp $0xFFF8, %ax
+    jge load_kernel_finish
+    mov %ax, (kload_current_cluster)
+    jmp load_kernel_loop
 
 load_kernel_finish:
     ljmp $0, $kernel_address
@@ -231,7 +251,6 @@ info:
 load_segment_from_disk:
 
 load_segment_from_disk_loop:
-    call info
     mov  (disk_reading_sectors_left), %ax
     mov  (disk_reading_dst),          %bx
 
