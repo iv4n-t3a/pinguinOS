@@ -8,15 +8,11 @@
 ////////// Main code helper macros
 
 .macro PRINTLN msg
-    xor %ax, %ax
-    mov %ax, %ds
     mov \msg, %si
     call println
 .endm
 
 .macro PRINT msg
-    xor %ax, %ax
-    mov %ax, %ds
     mov \msg, %si
     call print
 .endm
@@ -24,7 +20,20 @@
 ////////////////////////////////////////////////////////////
 ////////// Executable code
 
+_start:
+
+    ljmp $0x800, $main
 main:
+    cli
+    mov $0x800, %ax
+    mov %ax, %ds
+    mov %ax, %es
+
+    xor %ax, %ax
+    mov %ax, %ss
+    mov $0x8000, %sp
+    cli
+
     PRINTLN $hello_world
     call unimplemented
 
@@ -49,6 +58,8 @@ main:
 
 ////////////////////////////////////////////////////////////
 ////////// Helper functions
+
+.section .far_text
 
 error:
     PRINTLN $error_message

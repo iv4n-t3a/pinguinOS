@@ -1,7 +1,6 @@
 OUTPUT_FORMAT(binary)
 SECTIONS
 {
-    . = 0x7C00;
     .text :
     {
         /* To analyze how much space is left */

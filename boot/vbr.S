@@ -17,8 +17,8 @@ BPB_root_dir_entries:      .word  512
 BPB_16_sectors_per_volume: .word  0
 BPB_media_descriptor_type: .byte  0xF8
 BPB_sectors_per_fat:       .word  256
-BPB_sectors_per_track:     .word  63 /* For int 0x13 */
-BPB_number_of_heads:       .word  16 /* For int 0x13 */
+BPB_sectors_per_track:     .word  32 /* For int 0x13 */
+BPB_number_of_heads:       .word  4  /* For int 0x13 */
 BPB_part_begin_lba:        .int   1
 BPB_32_sectors_per_volume: .int   0x10000
 
@@ -34,42 +34,45 @@ BPB_FAT_type_as_string:    .ascii "FAT16   "
 ////////// Memory layout
 
 // General memory layout
-.set root_dir_address,   0x0500
-.set stack_begin,        0x7C00
-.set vbr_address,        0x7C00
-.set DAP_address,        0x7E00
-.set variables_address,  0x7F00
-.set kernel_address,     0x8000
+.equ root_dir_address,   0x0500
+.equ stack_begin,        0x7000
+.equ current_fat_sector, 0x7000
+.equ vbr_address,        0x7C00
+.equ DAP_address,        0x7E00
+.equ variables_address,  0x7F00
+.equ kernel_address,     0x8000
 
 // Dapack
-.set DAP_packet_size,              0x7E00
-.set DAP_zero,                     0x7E01
-.set DAP_read_sectors,             0x7E02
-.set DAP_transfer_buffer_offset,   0x7E04
-.set DAP_transfer_buffer_segment,  0x7E06
-.set DAP_starting_LBA_lower,       0x7E08
-.set DAP_starting_LBA_upper,       0x7E0C
+.equ DAP_packet_size,              0x7E00
+.equ DAP_zero,                     0x7E01
+.equ DAP_read_sectors,             0x7E02
+.equ DAP_transfer_buffer_offset,   0x7E04
+.equ DAP_transfer_buffer_segment,  0x7E06
+.equ DAP_starting_LBA_lower,       0x7E08
+.equ DAP_starting_LBA_upper,       0x7E0C
 
 // Partition info
-.set fat_start_LBA,               0x7F10
-.set root_dir_start_LBA,          0x7F12
-.set root_dir_size,               0x7F14
-.set data_region_begin_LBA,       0x7F16
+.equ fat_start_LBA,               0x7F10
+.equ root_dir_start_LBA,          0x7F12
+.equ root_dir_size,               0x7F14
+.equ data_region_begin_LBA,       0x7F16
 // Load sectors from disk related
-.set disk_reading_sectors_left,   0x7F18
-.set disk_reading_dst,            0x7F1A
-.set disk_reading_LBA,            0x7F1C
+.equ disk_reading_sectors_left,   0x7F18
+.equ disk_reading_dst,            0x7F1A
+.equ disk_reading_LBA,            0x7F1C
 // Kernel load related
-.set kload_current_cluster,       0x7F20
-.set kload_write_iter,            0x7F22
+.equ kload_current_cluster,       0x7F20
+.equ kload_write_iter,            0x7F22
 
 ////////////////////////////////////////////////////////////
 ////////// Executable code
 
 main:
+    // Set code segment
+    ljmp $0, $skip
+skip:
     cli
     xor %ax, %ax
-    mov %ax, %cs
     mov %ax, %ds
     mov %ax, %es
     mov %ax, %ss
@@ -117,10 +120,10 @@ calc_data_region_begin_LBA:
 load_root_dir:
     mov (root_dir_size), %ax
     mov %ax, (disk_reading_sectors_left)
-    mov $root_dir_address, (disk_reading_dst)
+    movw $root_dir_address, (disk_reading_dst)
     mov (root_dir_start_LBA), %ax
     mov %ax, (disk_reading_LBA)
-    mov $0,  (disk_reading_LBA + 2)
+    movw $0,  (disk_reading_LBA + 2)
     call load_segment_from_disk
 
 find_kernel_file:
@@ -150,10 +153,9 @@ load_kernel:
     mov (%bx), %bx
     mov %bx, (kload_current_cluster)
 
-    mov $kernel_address, (kload_write_iter)
+    movw $kernel_address, (kload_write_iter)
 
 load_kernel_loop:
-    call info
     // lba = data_region_begin + (kload_current_cluster - 2) * BPB_sectors_per_cluster
     mov (kload_current_cluster), %ax
     sub $2, %ax
@@ -165,36 +167,51 @@ load_kernel_loop:
     mov %dx, (disk_reading_LBA+2)
     mov %ax, (disk_reading_LBA)
 
+    // disk_reading_dst = kload_write_iter
     mov (kload_write_iter), %ax
     mov %ax, (disk_reading_dst)
 
+    // disk_reading_sectors_left = BPB_sectors_per_cluster
     xor %ax, %ax
     movb (BPB_sectors_per_cluster), %al
     mov %ax, (disk_reading_sectors_left)
 
+    // Read cluster
     call load_segment_from_disk
 
-    mov (kload_write_iter), %ax
-    mov (BPB_sectors_per_cluster), %bx
-    add %bx, %ax
-    mov %ax, (kload_write_iter)
+    // kload_write_iter += BPB_sectors_per_cluster * BPB_bytes_per_sector
+    xor %ax, %ax
+    movb (BPB_sectors_per_cluster), %al
+    mov (BPB_bytes_per_sector), %bx
+    mul %bx
+    mov (kload_write_iter), %bx
+    add %ax, %bx
+    mov %bx, (kload_write_iter)
 
+    // Read next FAT sector
+    // disk_reading_LBA = (kload_current_cluster / BPB_bytes_per_sector) + fat_start_LBA
+    mov (kload_current_cluster), %ax
+    mov (BPB_bytes_per_sector), %bx
+    div %bx
+    add (fat_start_LBA), %ax
+    mov %ax, (disk_reading_LBA)
+    // Read 1 sector into current_fat_sector
+    movw $current_fat_sector, (disk_reading_dst)
+    movw $1, (disk_reading_sectors_left)
+    call load_segment_from_disk
+
+    // Find next cluster
     mov (kload_current_cluster), %ax
     shl $1, %ax
-    mov $root_dir_address, %bx
+
+    mov $current_fat_sector, %bx
     add %ax, %bx
+
     mov (%bx), %ax
 
+    // Check for last cluster
     cmp $0xFFF8, %ax
-    je unimplemented
-    cmp $0xFFFF, %ax
-    je unimplemented
-    cmp $0xF8FF, %ax
-    je unimplemented
-    jmp error
-
-    cmp $0xFFF8, %ax
-    jge load_kernel_finish
+    jae load_kernel_finish
     mov %ax, (kload_current_cluster)
     jmp load_kernel_loop
 
@@ -234,20 +251,6 @@ error:
     PCHAR $'R'
     jmp .
 
-unimplemented:
-    mov $0x0E, %ah
-    mov $0, %bh
-
-    PCHAR $'U'
-    jmp .
-
-info:
-    mov $0x0E, %ah
-    mov $0, %bh
-
-    PCHAR $'I'
-    ret
-
 load_segment_from_disk:
 
 load_segment_from_disk_loop:
@@ -257,7 +260,7 @@ load_segment_from_disk_loop:
     movb $0x10, (DAP_packet_size)
     movb $0,    (DAP_zero)
     mov  %ax,   (DAP_read_sectors)
-    mov  $0,    (DAP_transfer_buffer_segment)
+    movw $0,    (DAP_transfer_buffer_segment)
     mov  %bx,   (DAP_transfer_buffer_offset)
 
     mov  (disk_reading_LBA),          %ax
@@ -265,8 +268,8 @@ load_segment_from_disk_loop:
 
     mov  %ax,   (DAP_starting_LBA_lower)
     mov  %bx,   (DAP_starting_LBA_lower + 2)
-    mov  $0,    (DAP_starting_LBA_upper)
-    mov  $0,    (DAP_starting_LBA_upper + 2)
+    movw $0,    (DAP_starting_LBA_upper)
+    movw $0,    (DAP_starting_LBA_upper + 2)
 
     mov $0x42, %ah
     mov (BPB_drive_number), %dl

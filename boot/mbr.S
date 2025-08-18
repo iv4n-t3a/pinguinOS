@@ -5,39 +5,51 @@
 ////////// Main code helper macros
 
 .macro PRINTLN msg
-    xor %ax, %ax
-    mov %ax, %ds
     mov \msg, %si
     call println
 .endm
 
 .macro PRINT msg
-    xor %ax, %ax
-    mov %ax, %ds
     mov \msg, %si
     call print
+.endm
+
+.macro SET_DATA_SEGMENT seg
+    cli
+    mov \seg, %ax
+    mov %ax, %ds
+    mov %ax, %es
+    sti
 .endm
 
 ////////////////////////////////////////////////////////////
 ////////// MBR code
 
 _start:
+
+    // Update code segment
+    ljmp $0x7C0, $skip
+skip:
+
+setup_segment_registers:
     cli
+    xor %ax, %ax
+    mov %ax, %ss
+    mov $stack_begin, %sp
+    sti
+
+    SET_DATA_SEGMENT $high_segment
 
 save_boot_drive:
     mov %dl, boot_drive
     call print_boot_drive
 
-setup_segment_registers:
-    xor %ax, %ax
-    mov %ax, %ds
-    mov %ax, %es
-    mov %ax, %ss
-    mov %ax, %sp
-
-    mov $0, (0x7DFE)
+    // Empty boot signature for further checks
+    mov $0, (0x1FE)
 
 copy_mbr_lower:
+    SET_DATA_SEGMENT $0
+
     mov $0x0100, %cx
     mov $0x7C00, %si
     mov $0x0600, %di
@@ -45,13 +57,7 @@ copy_mbr_lower:
     ljmp $0, $(0x0600 + low_start - _start)
 
 low_start:
-    mov %cs, %ax
-    mov %ax, %ds
-    mov %ax, %es
-    cmp $0x0, %ax
-    jne error
-
-    sti
+    SET_DATA_SEGMENT $low_segment
 
 check_partitions:
     mov $PT1, %bx
@@ -61,13 +67,13 @@ check_partitions_loop:
     mov (%bx), %al
     test $0x80, %al
     jz check_partitions_failure
-    call check_partitions_success
+    jmp check_partitions_success
 
 check_partitions_failure:
     add $0x10, %bx
     dec %cx
     jnz check_partitions_loop
-    call error
+    jmp error
 
 check_partitions_success:
     mov %bx, selected_partition
@@ -87,13 +93,19 @@ read_vbr:
     jc error
 
 jump_to_vbr:
-    cmpw $0xAA55, (0x7DFE)
-    jne error
-
     mov selected_partition, %si
     mov boot_drive, %di
+
+    SET_DATA_SEGMENT $high_segment
+    cmpw $0xAA55, (0x1FE)
+    jne no_boot_signature
+
     ljmp $0, $0x7C00
-    call unimplemented
+
+no_boot_signature:
+    SET_DATA_SEGMENT $low_segment
+    PRINTLN $no_boot_signature_message
+    jmp .
 
 ////////////////////////////////////////////////////////////
 ////////// Helper functions helper macros
@@ -170,8 +182,18 @@ error_message:
 unimplemented_message:
     .asciz "Further boot unimplemented."
 
+no_boot_signature_message:
+    .asciz "Boot signature check failed"
+
 boot_drive_message:
     .asciz "Booting from drive "
+
+////////////////////////////////////////////////////////////
+////////// Constatns
+
+.equ stack_begin, 0xFFF0
+.equ low_segment, 0x60
+.equ high_segment, 0x7C0
 
 ////////////////////////////////////////////////////////////
 ////////// Variables
