@@ -45,7 +45,7 @@ save_boot_drive:
     call print_boot_drive
 
     // Empty boot signature for further checks
-    mov $0, (0x1FE)
+    movw $0, (0x1FE)
 
 copy_mbr_lower:
     SET_DATA_SEGMENT $0

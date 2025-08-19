@@ -1,0 +1,7 @@
+AS=as
+CC=gcc
+LD=ld
+
+AS_FLAGS=
+CC_FLAGS=
+LD_FLAGS=
