@@ -1,0 +1,192 @@
+.code16
+.global _start
+
+////////////////////////////////////////////////////////////
+////////// Memory layout
+
+.equ stack_begin, 0x7000
+.equ code_begin,  0x8000
+
+////////////////////////////////////////////////////////////
+////////// Main code helper macros
+
+.macro PRINTLN msg
+    mov \msg, %si
+    call println
+.endm
+
+.macro PRINT msg
+    mov \msg, %si
+    call print
+.endm
+
+////////////////////////////////////////////////////////////
+////////// Executable code
+
+_start:
+
+    ljmp $0x0, $main
+main:
+    cli
+    xor %ax, %ax
+    mov %ax, %ds
+    mov %ax, %ss
+    mov %ax, %es
+    mov %ax, %fs
+    mov %ax, %gs
+
+    mov $stack_begin, %sp
+    sti
+
+    PRINTLN $boot1_greating_message
+
+enable_a20:
+    in $0x92, %al
+    or $2, %al
+    out %al, $0x92
+
+load_gdt:
+    cli
+    lgdt GDT_descriptor
+
+enable_protected:
+    mov %cr0, %eax
+    or $1, %eax
+    mov %eax, %cr0
+
+jump_protected:
+    ljmp $1 << 3, $(protected_start - _start + 0x8000)
+
+.code32
+
+protected_start:
+    mov $2 << 3, %ax
+    mov %ax, %ds
+    mov %ax, %es
+    mov %ax, %fs
+    mov %ax, %gs
+    mov %ax, %ss
+    mov $0xF00000, %ebp
+    mov $0xF00000, %esp
+    sti
+
+    hlt
+
+.code16
+
+////////////////////////////////////////////////////////////
+////////// Helper functions helper macros
+
+.macro PCHAR char
+    mov \char, %al
+    int $0x10
+.endm
+
+.macro PDIGIT digit
+    mov \digit, %al
+
+    add $6, %al
+    xor $0xf, %al
+    sub $6, %al
+
+    add $'0', %al
+    int $0x10
+.endm
+
+////////////////////////////////////////////////////////////
+////////// Helper functions
+
+error:
+    PRINTLN $error_message
+    jmp .
+
+unimplemented:
+    PRINTLN $unimplemented_message
+    jmp .
+
+print:
+    mov $0x0E, %ah
+    mov $0, %bh
+
+    // Print 'BOOT1: ' preffix
+    PCHAR $'B'
+    PCHAR $'O'
+    PCHAR $'O'
+    PCHAR $'T'
+    PCHAR $'1'
+    PCHAR $':'
+    PCHAR $' '
+print_loop:
+    lodsb
+    test %al, %al
+    je print_done
+    int $0x10
+    jmp print_loop
+print_done:
+    ret
+
+println:
+    call print
+println_done:
+    PCHAR $'\r'
+    PCHAR $'\n'
+    ret
+
+////////////////////////////////////////////////////////////
+////////// GDT
+
+.macro GDT_ENTRY base, limit, flags, access_byte
+  .word \limit & 0xFFFF
+  .word \base & 0xFFFF
+  .byte (\base > 16) & 0xFF
+  .byte \access_byte
+  .byte ((\limit > 16) & 0xF) | (\flags << 4)
+  .byte \base > 24
+.endm
+
+.equ GDT_FLAGS_GRANULARITY, 8
+.equ GDT_FLAGS_SIZE, 4
+.equ GDT_FLAGS_LONG_MODE, 1
+
+.equ GDT_AB_PRESENT_BIT, 0x80
+.equ GDT_AB_DPL0, 0x00
+.equ GDT_AB_DPL1, 0x20
+.equ GDT_AB_DPL2, 0x40
+.equ GDT_AB_DPL3, 0x60
+.equ GDT_AB_TYPE_BIT, 0x10 /* Set if code or data segment. System seg else */
+.equ GDT_AB_EXECUTABLE, 0x08
+.equ GDT_AB_CONFORMING, 0x04
+.equ GDT_AB_CODE_READABLE, 0x02
+.equ GDT_AB_DATA_WRITABLE, 0x02
+.equ GDT_AB_ACCESS_BIT, 0x01
+
+.equ GDT_32_PROTECTED_FLAGS, GDT_FLAGS_GRANULARITY | GDT_FLAGS_SIZE
+
+.equ CODE_SEGMENT_AB, GDT_AB_PRESENT_BIT | GDT_AB_TYPE_BIT | GDT_AB_EXECUTABLE | GDT_AB_CODE_READABLE
+.equ DATA_SEGMENT_AB, GDT_AB_PRESENT_BIT | GDT_AB_TYPE_BIT | GDT_AB_DATA_WRITABLE
+
+// Alignment
+.balign 4
+
+GDT_begin:
+    GDT_ENTRY 0, 0, 0, 0
+    GDT_ENTRY 0, 0xFFFFFFFF, GDT_32_PROTECTED_FLAGS, CODE_SEGMENT_AB
+    GDT_ENTRY 0, 0xFFFFFFFF, GDT_32_PROTECTED_FLAGS, DATA_SEGMENT_AB
+GDT_end:
+
+GDT_descriptor:
+    .word GDT_end - GDT_begin - 1
+    .int GDT_begin
+
+
+////////////////////////////////////////////////////////////
+////////// Messages
+
+boot1_greating_message:
+    .asciz "Bootloader second stage started"
+
+error_message:
+    .asciz "Fatal error."
+
+unimplemented_message:
+    .asciz "Unimplemented hit."

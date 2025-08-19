@@ -289,4 +289,4 @@ load_segment_from_disk_loop_finish:
 ////////// Constants
 
 kernel_filename:
-  .asciz "KERNEL  BIN"
+  .asciz "STAGE2  BIN"
