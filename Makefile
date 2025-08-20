@@ -1,4 +1,4 @@
-include configure.mk
+include config.mk
 
 build/bootable.dd: build/mbr.img build/vbr.img build/stage2.img
 	dd if=/dev/zero of=$@ bs=1048576 count=32
@@ -15,6 +15,10 @@ build/vbr.img: boot/stage1/*
 
 build/stage2.img: boot/stage2/*
 	make -C boot/stage2
+
+tools:
+	make -C third-party
+.PHONY: tools
 
 run: build/bootable.dd
 	qemu-system-i386 -nographic -drive file=build/bootable.dd,format=raw -serial mon:stdio

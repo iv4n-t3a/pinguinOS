@@ -1,3 +1,5 @@
+include ../../config.mk
+
 BUILDDIR=../../build
 
 $(BUILDDIR)/stage2.img: $(BUILDDIR)/stage2_entry.o stage2.ld

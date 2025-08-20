@@ -1,3 +1,5 @@
+include ../../config.mk
+
 BUILDDIR=../../build
 
 $(BUILDDIR)/mbr.img: $(BUILDDIR)/mbr.o mbr.ld
