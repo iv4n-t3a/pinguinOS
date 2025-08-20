@@ -21,7 +21,7 @@ tools:
 .PHONY: tools
 
 run: build/bootable.dd
-	qemu-system-i386 -nographic -drive file=build/bootable.dd,format=raw -serial mon:stdio
+	qemu-system-i386 -drive file=build/bootable.dd,format=raw -serial mon:stdio
 .PHONY: run
 
 debug: build/bootable.dd

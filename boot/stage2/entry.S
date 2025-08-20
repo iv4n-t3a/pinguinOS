@@ -6,6 +6,7 @@
 
 .equ stack_begin, 0x7000
 .equ code_begin,  0x8000
+.equ stack32_begin, 0xF00000
 
 ////////////////////////////////////////////////////////////
 ////////// Main code helper macros
@@ -36,7 +37,6 @@ main:
     mov %ax, %gs
 
     mov $stack_begin, %sp
-    sti
 
     PRINTLN $boot1_greating_message
 
@@ -46,7 +46,6 @@ enable_a20:
     out %al, $0x92
 
 load_gdt:
-    cli
     lgdt GDT_descriptor
 
 enable_protected:
@@ -60,18 +59,23 @@ jump_protected:
 .code32
 
 protected_start:
+
+setup_segment_registers:
     mov $2 << 3, %ax
     mov %ax, %ds
     mov %ax, %es
     mov %ax, %fs
     mov %ax, %gs
     mov %ax, %ss
-    mov $0xF00000, %ebp
-    mov $0xF00000, %esp
-    sti
 
-    hlt
+setup_stack:
+    mov $stack32_begin, %ebp
+    mov $stack32_begin, %esp
 
+    call bootmain
+
+1:  hlt
+    jmp 1b
 .code16
 
 ////////////////////////////////////////////////////////////

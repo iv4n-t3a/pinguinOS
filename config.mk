@@ -1,6 +1,6 @@
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
-TOOLCHAIN_PREFIX=$(ROOT_DIR)/third-party
+TOOLCHAIN_PREFIX=${ROOT_DIR}/third-party
 TARGET=i686-elf
 
 AS=${ROOT_DIR}/third-party/bin/i686-elf-as
@@ -8,7 +8,7 @@ CC=${ROOT_DIR}/third-party/bin/i686-elf-gcc
 LD=${ROOT_DIR}/third-party/bin/i686-elf-ld
 
 AS_FLAGS=
-CC_FLAGS=-I${TOOLCHAIN_PREFIX}/lib/gcc/${TARGET}/${GCC_VERSION}/include -ffreestanding
+CC_FLAGS=-I${ROOT_DIR} -ffreestanding
 LD_FLAGS=
 
 GCC_VERSION=15.2.0
