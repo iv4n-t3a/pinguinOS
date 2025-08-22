@@ -1,14 +1,15 @@
-OUTPUT_FORMAT(binary)
+ENTRY(kmain)
+OUTPUT_FORMAT(elf32-i386)
 SECTIONS
 {
-  .text (0x8000) : {
+  .text (0x100000) : {
     *( .text )
   }
 
   .rodata : {
     _RODATA_START_ = .;
      *(.rodata)
-    _RODATA_END_ = .;
+    _RODATA_START_ = .;
   }
 
   .data : ALIGN(CONSTANT(MAXPAGESIZE)) {

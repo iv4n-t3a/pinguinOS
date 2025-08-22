@@ -222,12 +222,11 @@ selected_partition_dapack_upper_LBA:
 UID:
   .fill 6, 1, 0
 PT1:
-  // Active testing partition
   .byte 0x80  /* Boot indicator: Active */
   .byte 0x00  /* Starting head */
   .byte 0x01  /* Starting sector 1, cylinder high bits 0 */
   .byte 0x00  /* Starting cylinder low bits */
-  .byte 0x83  /* Partition type: Linux */
+  .byte 228   /* Assume 228 is pinguin OS partition type */
   .byte 0x01  /* Ending head */
   .byte 0x00  /* Ending sector */
   .byte 0x00  /* Ending cylinder low bits */
