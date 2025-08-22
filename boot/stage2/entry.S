@@ -4,9 +4,8 @@
 ////////////////////////////////////////////////////////////
 ////////// Memory layout
 
-.equ stack_begin, 0x7000
+.equ stack_begin, 0x8000
 .equ code_begin,  0x8000
-.equ stack32_begin, 0xF00000
 
 ////////////////////////////////////////////////////////////
 ////////// Main code helper macros
@@ -25,18 +24,17 @@
 ////////// Executable code
 
 _start:
-
     ljmp $0x0, $main
 main:
     cli
     xor %ax, %ax
     mov %ax, %ds
     mov %ax, %ss
-    mov %ax, %es
-    mov %ax, %fs
-    mov %ax, %gs
 
     mov $stack_begin, %sp
+    sti
+
+    mov %dl, (boot_drive)
 
     PRINTLN $boot1_greating_message
 
@@ -54,7 +52,8 @@ enable_protected:
     mov %eax, %cr0
 
 jump_protected:
-    ljmp $1 << 3, $(protected_start - _start + 0x8000)
+    cli
+    ljmp $1 << 3, $protected_start
 
 .code32
 
@@ -69,8 +68,10 @@ setup_segment_registers:
     mov %ax, %ss
 
 setup_stack:
-    mov $stack32_begin, %ebp
-    mov $stack32_begin, %esp
+    mov $stack_begin, %ebp
+    mov $stack_begin, %esp
+
+    push (boot_drive)
 
     call bootmain
 
@@ -112,13 +113,13 @@ print:
     mov $0x0E, %ah
     mov $0, %bh
 
-    // Print 'BOOT1: ' preffix
-    PCHAR $'B'
-    PCHAR $'O'
-    PCHAR $'O'
+    // Print 'STAGE2: ' preffix
+    PCHAR $'S'
     PCHAR $'T'
-    PCHAR $'1'
-    PCHAR $':'
+    PCHAR $'A'
+    PCHAR $'G'
+    PCHAR $'E'
+    PCHAR $'2'
     PCHAR $' '
 print_loop:
     lodsb
@@ -148,18 +149,19 @@ println_done:
   .byte \base > 24
 .endm
 
-.equ GDT_FLAGS_GRANULARITY, 8
-.equ GDT_FLAGS_SIZE, 4
+.equ GDT_FLAGS_GRANULARITY, 8 /* If set limit is 4K block */
+.equ GDT_FLAGS_SIZE, 4 /* 32-bit pm descriptor if set. 16-bit pm else */
 .equ GDT_FLAGS_LONG_MODE, 1
 
-.equ GDT_AB_PRESENT_BIT, 0x80
-.equ GDT_AB_DPL0, 0x00
+.equ GDT_AB_PRESENT_BIT, 0x80 /* Allows an entry to refer to a valid segment */
+.equ GDT_AB_DPL0, 0x00 /* Descriptor privilege level */
 .equ GDT_AB_DPL1, 0x20
 .equ GDT_AB_DPL2, 0x40
 .equ GDT_AB_DPL3, 0x60
 .equ GDT_AB_TYPE_BIT, 0x10 /* Set if code or data segment. System seg else */
 .equ GDT_AB_EXECUTABLE, 0x08
-.equ GDT_AB_CONFORMING, 0x04
+.equ GDT_AB_CONFORMING_BIT, 0x04 /* Set if can be executed from an equal or lower dpl */
+.equ GDT_AB_DIRECTION_BIT, 0x04 /* Set if grows down for data segment */
 .equ GDT_AB_CODE_READABLE, 0x02
 .equ GDT_AB_DATA_WRITABLE, 0x02
 .equ GDT_AB_ACCESS_BIT, 0x01
@@ -173,15 +175,25 @@ println_done:
 .balign 4
 
 GDT_begin:
+    // Null descriptor
     GDT_ENTRY 0, 0, 0, 0
+    // 32-bit descriptors
     GDT_ENTRY 0, 0xFFFFFFFF, GDT_32_PROTECTED_FLAGS, CODE_SEGMENT_AB
     GDT_ENTRY 0, 0xFFFFFFFF, GDT_32_PROTECTED_FLAGS, DATA_SEGMENT_AB
+    // 16-bit descriptors
+    GDT_ENTRY 0, 0xFFFFFFFF, 0, CODE_SEGMENT_AB
+    GDT_ENTRY 0, 0xFFFFFFFF, 0, DATA_SEGMENT_AB
 GDT_end:
 
 GDT_descriptor:
     .word GDT_end - GDT_begin - 1
     .int GDT_begin
 
+////////////////////////////////////////////////////////////
+////////// Variables
+
+boot_drive:
+    .int 0
 
 ////////////////////////////////////////////////////////////
 ////////// Messages

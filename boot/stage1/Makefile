@@ -1,16 +1,17 @@
 include ../../config.mk
 
-BUILDDIR=../../build
+all: $(BUILD_DIR)/mbr.img $(BUILD_DIR)/vbr.img
+.PHONY: all
 
-$(BUILDDIR)/mbr.img: $(BUILDDIR)/mbr.o mbr.ld
-	$(LD) $(LD_FLAGS) -T mbr.ld -o $(BUILDDIR)/mbr.img $(BUILDDIR)/mbr.o
+$(BUILD_DIR)/mbr.img: $(BUILD_DIR)/mbr.o mbr.ld
+	$(LD) $(LD_FLAGS) -T mbr.ld -o $(BUILD_DIR)/mbr.img $(BUILD_DIR)/mbr.o
 
-$(BUILDDIR)/mbr.o: mbr.S
-	$(AS) $(AS_FLAGS) -o $(BUILDDIR)/mbr.o mbr.S
+$(BUILD_DIR)/mbr.o: mbr.S
+	$(AS) $(AS_FLAGS) -o $(BUILD_DIR)/mbr.o mbr.S
 
-$(BUILDDIR)/vbr.img: $(BUILDDIR)/vbr.o vbr.ld
-	$(LD) $(LD_FLAGS) -T vbr.ld -o $(BUILDDIR)/vbr.img $(BUILDDIR)/vbr.o
+$(BUILD_DIR)/vbr.img: $(BUILD_DIR)/vbr.o vbr.ld
+	$(LD) $(LD_FLAGS) -T vbr.ld -o $(BUILD_DIR)/vbr.img $(BUILD_DIR)/vbr.o
 
-$(BUILDDIR)/vbr.o: vbr.S
-	$(AS) $(AS_FLAGS) -o $(BUILDDIR)/vbr.o vbr.S
+$(BUILD_DIR)/vbr.o: vbr.S
+	$(AS) $(AS_FLAGS) -o $(BUILD_DIR)/vbr.o vbr.S
 

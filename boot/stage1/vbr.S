@@ -40,7 +40,7 @@ BPB_FAT_type_as_string:    .ascii "FAT16   "
 .equ vbr_address,        0x7C00
 .equ DAP_address,        0x7E00
 .equ variables_address,  0x7F00
-.equ kernel_address,     0x8000
+.equ next_stage_address, 0x8000
 
 // Dapack
 .equ DAP_packet_size,              0x7E00
@@ -51,6 +51,7 @@ BPB_FAT_type_as_string:    .ascii "FAT16   "
 .equ DAP_starting_LBA_lower,       0x7E08
 .equ DAP_starting_LBA_upper,       0x7E0C
 
+.equ boot_drive,                  0x7F0C
 // Partition info
 .equ fat_start_LBA,               0x7F10
 .equ root_dir_start_LBA,          0x7F12
@@ -60,9 +61,9 @@ BPB_FAT_type_as_string:    .ascii "FAT16   "
 .equ disk_reading_sectors_left,   0x7F18
 .equ disk_reading_dst,            0x7F1A
 .equ disk_reading_LBA,            0x7F1C
-// Kernel load related
-.equ kload_current_cluster,       0x7F20
-.equ kload_write_iter,            0x7F22
+// Next stage load related
+.equ nsload_current_cluster,       0x7F20
+.equ nsload_write_iter,            0x7F22
 
 ////////////////////////////////////////////////////////////
 ////////// Executable code
@@ -78,6 +79,8 @@ skip:
     mov %ax, %ss
     mov $stack_begin, %sp
     sti
+
+    mov %dl, (boot_drive)
 
 // BPB_reserved_sectors + BPB_part_begin_lba
 calc_fat_start_LBA:
@@ -126,38 +129,38 @@ load_root_dir:
     movw $0,  (disk_reading_LBA + 2)
     call load_segment_from_disk
 
-find_kernel_file:
+find_next_stage_file:
     mov $root_dir_address, %bx
     mov (BPB_root_dir_entries), %cx
 
-find_kernel_loop:
+find_next_stage_loop:
     push %cx
-    mov $kernel_filename, %si
+    mov $next_stage_filename, %si
     mov %bx,              %di
     mov $11, %cx
     repe cmpsb
 
-    je find_kernel_loop_finish
+    je find_next_stage_loop_finish
 
     add $32, %bx
     pop %cx
     dec %cx
     jz error
 
-    jmp find_kernel_loop
+    jmp find_next_stage_loop
 
-find_kernel_loop_finish:
+find_next_stage_loop_finish:
 
-load_kernel:
+load_next_stage:
     add $26, %bx
     mov (%bx), %bx
-    mov %bx, (kload_current_cluster)
+    mov %bx, (nsload_current_cluster)
 
-    movw $kernel_address, (kload_write_iter)
+    movw $next_stage_address, (nsload_write_iter)
 
-load_kernel_loop:
-    // lba = data_region_begin + (kload_current_cluster - 2) * BPB_sectors_per_cluster
-    mov (kload_current_cluster), %ax
+load_next_stage_loop:
+    // lba = data_region_begin + (nsload_current_cluster - 2) * BPB_sectors_per_cluster
+    mov (nsload_current_cluster), %ax
     sub $2, %ax
     xor %dx, %dx
     xor %bx, %bx
@@ -167,8 +170,8 @@ load_kernel_loop:
     mov %dx, (disk_reading_LBA+2)
     mov %ax, (disk_reading_LBA)
 
-    // disk_reading_dst = kload_write_iter
-    mov (kload_write_iter), %ax
+    // disk_reading_dst = nsload_write_iter
+    mov (nsload_write_iter), %ax
     mov %ax, (disk_reading_dst)
 
     // disk_reading_sectors_left = BPB_sectors_per_cluster
@@ -179,18 +182,18 @@ load_kernel_loop:
     // Read cluster
     call load_segment_from_disk
 
-    // kload_write_iter += BPB_sectors_per_cluster * BPB_bytes_per_sector
+    // nsload_write_iter += BPB_sectors_per_cluster * BPB_bytes_per_sector
     xor %ax, %ax
     movb (BPB_sectors_per_cluster), %al
     mov (BPB_bytes_per_sector), %bx
     mul %bx
-    mov (kload_write_iter), %bx
+    mov (nsload_write_iter), %bx
     add %ax, %bx
-    mov %bx, (kload_write_iter)
+    mov %bx, (nsload_write_iter)
 
     // Read next FAT sector
-    // disk_reading_LBA = (kload_current_cluster / BPB_bytes_per_sector) + fat_start_LBA
-    mov (kload_current_cluster), %ax
+    // disk_reading_LBA = (nsload_current_cluster / BPB_bytes_per_sector) + fat_start_LBA
+    mov (nsload_current_cluster), %ax
     mov (BPB_bytes_per_sector), %bx
     div %bx
     add (fat_start_LBA), %ax
@@ -201,7 +204,7 @@ load_kernel_loop:
     call load_segment_from_disk
 
     // Find next cluster
-    mov (kload_current_cluster), %ax
+    mov (nsload_current_cluster), %ax
     shl $1, %ax
 
     mov $current_fat_sector, %bx
@@ -211,12 +214,13 @@ load_kernel_loop:
 
     // Check for last cluster
     cmp $0xFFF8, %ax
-    jae load_kernel_finish
-    mov %ax, (kload_current_cluster)
-    jmp load_kernel_loop
+    jae load_next_stage_finish
+    mov %ax, (nsload_current_cluster)
+    jmp load_next_stage_loop
 
-load_kernel_finish:
-    ljmp $0, $kernel_address
+load_next_stage_finish:
+    mov (boot_drive), %dl
+    ljmp $0, $next_stage_address
 
 ////////////////////////////////////////////////////////////
 ////////// Helper functions helper macros
@@ -272,7 +276,7 @@ load_segment_from_disk_loop:
     movw $0,    (DAP_starting_LBA_upper + 2)
 
     mov $0x42, %ah
-    mov (BPB_drive_number), %dl
+    mov (boot_drive), %dl
     mov $DAP_address, %si
 
     int $0x13
@@ -288,5 +292,5 @@ load_segment_from_disk_loop_finish:
 ////////////////////////////////////////////////////////////
 ////////// Constants
 
-kernel_filename:
+next_stage_filename:
   .asciz "STAGE2  BIN"
