@@ -2,7 +2,7 @@
 
 #include "boot/stage2/bios_calls.h"
 #include "boot/stage2/load_sectors.h"
-#include "kernel_libs/string_util.h"
+#include "core_lib/string.h"
 
 #define MEDIATOR_BUFFER_SIZE 512
 

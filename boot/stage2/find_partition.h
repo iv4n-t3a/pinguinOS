@@ -1,7 +1,7 @@
 #ifndef BOOT_STAGE2_FIND_PARTITION_H
 #define BOOT_STAGE2_FIND_PARTITION_H
 
-#include "kernel_libs/mbr.h"
+#include "core_lib/mbr.h"
 
 typedef enum {
   FIND_PARTITION_SUCCESS = 0,

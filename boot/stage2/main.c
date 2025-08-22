@@ -5,14 +5,13 @@
 #include "boot/stage2/find_partition.h"
 #include "boot/stage2/load_file.h"
 #include "boot/stage2/load_sectors.h"
-#include "kernel_libs/elf.h"
-#include "kernel_libs/mbr.h"
-#include "kernel_libs/string_util.h"
-#include "kernel_libs/vga.h"
-
+#include "core_lib/elf.h"
+#include "core_lib/mbr.h"
+#include "core_lib/string.h"
+#include "core_lib/vga.h"
 
 void __attribute__((cdecl)) bootmain(int boot_drive) {
-  void* kernel_address = (void*)0x100000;
+  void *kernel_address = (void *)0x100000;
 
   terminal_initialize(80, 25);
 
@@ -49,13 +48,11 @@ void __attribute__((cdecl)) bootmain(int boot_drive) {
   }
 
   void (*kmain)();
-  kmain = (void*)header->program_entry_offset;
+  kmain = (void *)header->program_entry_offset;
 
   terminal_write(kernel_address, 4);
   terminal_putchar('\n');
   terminal_writeint(header->program_entry_offset);
-
-  kmain();
 
   for (;;) {
   }

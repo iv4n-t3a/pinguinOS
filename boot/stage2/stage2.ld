@@ -1,8 +1,18 @@
 OUTPUT_FORMAT(binary)
-SECTIONS
-{
-  .text (0x8000) : {
-    *( .text )
+
+SECTIONS {
+  . = 0x8000;
+
+  .entry : {
+    _ENTRY_START_ = .;
+    *(.entry)
+    _ENTRY_END_ = .;
+  }
+
+  .text : {
+    _TEXT_START_ = .;
+    *(.text)
+    _TEXT_END_ = .;
   }
 
   .rodata : {
@@ -23,4 +33,3 @@ SECTIONS
     _BSS_END_ = .;
   }
 }
-

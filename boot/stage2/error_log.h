@@ -1,7 +1,7 @@
 #ifndef BOOT_STAGE2_ERROR_LOG_H
 #define BOOT_STAGE2_ERROR_LOG_H
 
-#include "kernel_libs/vga.h"
+#include "core_lib/vga.h"
 
 static inline void error_log(const char* msg, int error_code) {
     terminal_writestring("STAGE2: ");

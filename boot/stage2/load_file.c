@@ -1,8 +1,8 @@
 #include "boot/stage2/load_file.h"
 
 #include "boot/stage2/load_sectors.h"
-#include "kernel_libs/fat16.h"
-#include "kernel_libs/string_util.h"
+#include "core_lib/fat16.h"
+#include "core_lib/string.h"
 
 #define FAT_BUFFER_SIZE 512
 #define ROOT_DIR_BUFFER_SIZE 512

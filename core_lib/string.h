@@ -1,5 +1,5 @@
-#ifndef LIB_STRING_UTIL_H
-#define LIB_STRING_UTIL_H
+#ifndef CORE_LIB_STRING_H
+#define CORE_LIB_STRING_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -12,4 +12,4 @@ bool strcmp(const char* str1, const char* str2, size_t size);
 
 void *memcpy(char *dst, const char *src, size_t count);
 
-#endif  // #ifndef LIB_STRING_UTIL_H
+#endif  // #ifndef CORE_LIB_STRING_H

@@ -1,5 +1,5 @@
-#ifndef LIB_FAT16_H
-#define LIB_FAT16_H
+#ifndef CORE_LIB_FAT16_H
+#define CORE_LIB_FAT16_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -84,4 +84,4 @@ static inline size_t fat16_get_cluster_lba(FAT16_BPB_t *bpb, size_t cluster) {
   return fat16_data_lba(bpb) + (cluster - 2) * bpb->sectors_per_cluster;
 }
 
-#endif // #ifndef LIB_FAT16_H
+#endif // #ifndef CORE_LIB_FAT16_H

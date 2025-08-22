@@ -18,14 +18,14 @@ build/mbr.img: boot/stage1/*
 build/vbr.img: boot/stage1/*
 	make -C boot/stage1
 
-build/stage2.img: boot/stage2/* $(KERNEL_LIBS)
+build/stage2.img: boot/stage2/* build/core_lib.o
 	make -C boot/stage2
 
-build/kernel.img: kernel/* $(KERNEL_LIBS)
+build/kernel.img: kernel/* build/core_lib.o
 	make -C kernel
 
-$(KERNEL_LIBS): kernel_libs/*
-	make -C kernel_libs
+build/core_lib.o: core_lib/*
+	make -C core_lib
 
 tools:
 	make -C third-party

@@ -1,7 +1,7 @@
 #include "boot/stage2/find_partition.h"
 
 #include "boot/stage2/load_sectors.h"
-#include "kernel_libs/mbr.h"
+#include "core_lib/mbr.h"
 
 uint8_t mbr_buffer[512];
 

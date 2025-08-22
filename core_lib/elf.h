@@ -1,5 +1,5 @@
-#ifndef LIB_ELF_H
-#define LIB_ELF_H
+#ifndef CORE_LIB_ELF_H
+#define CORE_LIB_ELF_H
 
 #include <stdint.h>
 
@@ -100,4 +100,4 @@ typedef struct {
   uint64_t alignment;
 } ELF_program_header64_t;
 
-#endif // #ifndef LIB_ELF_H
+#endif // #ifndef CORE_LIB_ELF_H

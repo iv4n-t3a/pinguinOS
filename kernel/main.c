@@ -1,4 +1,4 @@
-#include "kernel_libs/vga.h"
+#include "core_lib/vga.h"
 
 void kmain() {
   terminal_initialize(80, 25);

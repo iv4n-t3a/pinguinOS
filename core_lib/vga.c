@@ -1,12 +1,12 @@
 // This code is stolen from https://wiki.osdev.org/Bare_Bones
 
-#include "kernel_libs/vga.h"
+#include "core_lib/vga.h"
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
-#include "kernel_libs/string_util.h"
+#include "core_lib/string.h"
 
 size_t terminal_width;
 size_t terminal_height;

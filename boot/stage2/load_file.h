@@ -1,8 +1,8 @@
 #ifndef BOOT_STAGE2_LOAD_FILE_H
 #define BOOT_STAGE2_LOAD_FILE_H
 
-#include "kernel_libs/mbr.h"
-#include "kernel_libs/fat16.h"
+#include "core_lib/mbr.h"
+#include "core_lib/fat16.h"
 
 typedef enum {
   INIT_FAT_SUCCESS = 0,

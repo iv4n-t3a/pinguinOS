@@ -1,5 +1,5 @@
-#ifndef LIB_MBR_H
-#define LIB_MBR_H
+#ifndef CORE_LIB_MBR_H
+#define CORE_LIB_MBR_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -28,4 +28,4 @@ static const size_t k_MBR_pinguinOS_partition_type = 228;
 static const size_t k_MBR_signature_offset = 510;
 static const uint16_t k_MBR_signature = 0xAA55;
 
-#endif // #ifndef LIB_MBR_H
+#endif // #ifndef CORE_LIB_MBR_H

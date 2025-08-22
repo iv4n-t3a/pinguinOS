@@ -1,4 +1,4 @@
-#include "kernel_libs/string_util.h"
+#include "core_lib/string.h"
 
 size_t strlen(const char *str) {
   size_t len = 0;

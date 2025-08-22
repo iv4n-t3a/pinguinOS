@@ -5,21 +5,21 @@ build/*
 bochsout.txt
 
 
-third-party/gcc-*
-third-party/binutils-*
-third-party/mpc-*
-third-party/mpfr-*
-third-party/gmp-*
+third_party/gcc-*
+third_party/binutils-*
+third_party/mpc-*
+third_party/mpfr-*
+third_party/gmp-*
 
-third-party/.gcc-*
-third-party/.binutils-*
-third-party/.mpc-*
-third-party/.mpfr-*
-third-party/.gmp-*
+third_party/.gcc-*
+third_party/.binutils-*
+third_party/.mpc-*
+third_party/.mpfr-*
+third_party/.gmp-*
 
-third-party/bin
-third-party/*-elf
-third-party/include
-third-party/lib
-third-party/libexec
-third-party/share
+third_party/bin
+third_party/*-elf
+third_party/include
+third_party/lib
+third_party/libexec
+third_party/share

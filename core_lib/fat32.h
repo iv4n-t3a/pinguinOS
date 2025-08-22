@@ -1,5 +1,5 @@
-#ifndef LIB_FAT32_H
-#define LIB_FAT32_H
+#ifndef CORE_LIB_FAT32_H
+#define CORE_LIB_FAT32_H
 
 #include <stddef.h>
 #include <stdint.h>

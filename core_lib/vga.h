@@ -1,5 +1,5 @@
-#ifndef LIB_VGA_H
-#define LIB_VGA_H
+#ifndef CORE_LIB_VGA_H
+#define CORE_LIB_VGA_H
 
 // This code is stolen from https://wiki.osdev.org/Bare_Bones
 
@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "kernel_libs/string_util.h"
+#include "core_lib/string.h"
 
 
 enum VgaColor {
@@ -51,4 +51,4 @@ void terminal_writestring(const char *data);
 
 void terminal_writeint(uint32_t num);
 
-#endif  // #ifndef LIB_VGA_H
+#endif  // #ifndef CORE_LIB_VGA_H
