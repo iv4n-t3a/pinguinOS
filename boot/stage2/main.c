@@ -12,8 +12,6 @@
 #include "core_lib/vga.h"
 
 void __attribute__((cdecl)) bootmain(int boot_drive) {
-  void *kernel_address = (void *)0x100000;
-
   terminal_initialize(80, 25);
 
   MBR_partition_table_t *pt;
@@ -21,5 +19,6 @@ void __attribute__((cdecl)) bootmain(int boot_drive) {
 
   ERR_HANDLE_MAIN(find_partition(boot_drive, &pt, &partition));
   ERR_HANDLE_MAIN(FAT_init(boot_drive, pt->entries + partition));
-  ERR_HANDLE_MAIN(run_elf("KERNEL  ELF", kernel_address));
+  ERR_HANDLE_MAIN(run_elf("KERNEL  ELF"));
+  ERR_HANDLE_MAIN(ERR_KERNEL_EXITED);
 }

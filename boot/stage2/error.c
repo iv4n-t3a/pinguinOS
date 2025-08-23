@@ -37,6 +37,9 @@ void error_log(error_t error) {
   case ERR_UNIMPLEMENTED:
     terminal_writestring("Unimplemented hit.\n");
     break;
+  case ERR_KERNEL_EXITED:
+    terminal_writestring("Error. Run kernel elf shall never return.\n");
+    break;
   default:
     terminal_writestring("Unknown error.\n");
     break;

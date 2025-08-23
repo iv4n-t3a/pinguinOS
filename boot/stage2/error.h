@@ -11,13 +11,15 @@ typedef enum {
   ERR_FILE_NOT_FOUND,
   ERR_INCOMPATIBLE_BUFFER_SIZE,
   ERR_INCOMPATIBLE_ELF,
-  ERR_UNIMPLEMENTED
+  ERR_UNIMPLEMENTED,
+  ERR_KERNEL_EXITED,
 } error_t;
 
 #define ERR_HANDLE_MAIN(func_call)                                             \
   if (error_t err = func_call) {                                               \
     error_log(err);                                                            \
-    return;                                                                    \
+    for (;;) {                                                                 \
+    };                                                                         \
   }
 
 #define ERR_HANDLE_SUBROUTINE(func_call)                                       \

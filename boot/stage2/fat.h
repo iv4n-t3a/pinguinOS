@@ -14,6 +14,7 @@ typedef struct {
   FAT_cluster_t cluster;
   size_t pos_in_cluster;
   size_t bytes_left;
+  size_t pos;
 } FAT_file_t;
 
 error_t FAT_init(int drive, MBR_partition_entry_t *entry);
@@ -21,5 +22,9 @@ error_t FAT_init(int drive, MBR_partition_entry_t *entry);
 error_t FAT_open(FAT_file_t *file, char *name);
 
 error_t FAT_read(FAT_file_t *file, uint8_t *buffer, size_t bytes);
+
+error_t FAT_peek(FAT_file_t file, uint8_t *buffer, size_t bytes);
+
+error_t FAT_seek(FAT_file_t *file, size_t bytes);
 
 #endif // #ifndef BOOT_STAGE2_LOAD_FAT_H
