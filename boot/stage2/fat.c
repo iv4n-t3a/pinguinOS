@@ -161,6 +161,7 @@ error_t FAT_seek(FAT_file_t *file, size_t bytes_to_skip) {
         MIN(bytes_to_skip, fat16_bytes_per_cluster(bpb) - file->pos_in_cluster);
     file->pos_in_cluster += skip_bytes;
     file->pos += skip_bytes;
+    file->bytes_left -= skip_bytes;
     bytes_to_skip -= skip_bytes;
   }
 
