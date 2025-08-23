@@ -3,15 +3,9 @@
 
 #include <stdint.h>
 
-typedef enum {
-  ELF_BITNESS_32 = 1,
-  ELF_BITNESS_64 = 2
-} elf_bitness_t;
+typedef enum { ELF_BITNESS_32 = 1, ELF_BITNESS_64 = 2 } elf_bitness_t;
 
-typedef enum {
-  ELF_LITTLE_ENDIAN = 1,
-  ELF_BIG_ENDIAN = 2
-} elf_endianess_t;
+typedef enum { ELF_LITTLE_ENDIAN = 1, ELF_BIG_ENDIAN = 2 } elf_endianess_t;
 
 typedef enum {
   ELF_TYPE_RELOCATABLE = 1,
@@ -35,13 +29,13 @@ typedef enum {
 } elf_instruction_set_t;
 
 typedef struct {
-  uint8_t magic[4]; // 0x7F, then 'ELF' in ASCII
-  uint8_t bitness;  // See elf_bitness_t
-  uint8_t endianess;  // See elf_endianess_t
+  uint8_t magic[4];  // 0x7F, then 'ELF' in ASCII
+  uint8_t bitness;   // See elf_bitness_t
+  uint8_t endianess; // See elf_endianess_t
   uint8_t elf_header_version;
   uint8_t os_abi;
   uint64_t padding;
-  uint16_t type; // See elf_type_t
+  uint16_t type;            // See elf_type_t
   uint16_t instruction_set; // See elf_instruction_set_t
   uint32_t elf_version;
   uint32_t program_entry_offset;
@@ -58,12 +52,12 @@ typedef struct {
 
 typedef struct {
   uint8_t magic[4];
-  uint8_t bitness;  // See elf_bitness_t
-  uint8_t endianess;  // See elf_endianess_t
+  uint8_t bitness;   // See elf_bitness_t
+  uint8_t endianess; // See elf_endianess_t
   uint8_t elf_header_version;
   uint8_t os_abi;
   uint64_t padding;
-  uint16_t type; // See elf_type_t
+  uint16_t type;            // See elf_type_t
   uint16_t instruction_set; // See elf_instruction_set_t
   uint32_t elf_version;
   uint64_t program_entry_offset;

@@ -9,7 +9,6 @@
 
 #include "core_lib/string.h"
 
-
 enum VgaColor {
   VGA_COLOR_BLACK = 0,
   VGA_COLOR_BLUE = 1,
@@ -39,6 +38,10 @@ static inline uint16_t vga_entry(unsigned char uc, uint8_t color) {
 
 void terminal_initialize(size_t width, size_t height);
 
+void terminal_move_cursor(int x, int y);
+
+void terminal_clear();
+
 void terminal_setcolor(uint8_t color);
 
 void terminal_putentryat(char c, uint8_t color, size_t x, size_t y);
@@ -51,4 +54,4 @@ void terminal_writestring(const char *data);
 
 void terminal_writeint(uint32_t num);
 
-#endif  // #ifndef CORE_LIB_VGA_H
+#endif // #ifndef CORE_LIB_VGA_H

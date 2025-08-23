@@ -1,8 +1,8 @@
 #ifndef CORE_LIB_MBR_H
 #define CORE_LIB_MBR_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 typedef struct {
   uint8_t boot_indicator;

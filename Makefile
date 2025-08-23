@@ -40,5 +40,5 @@ debug: build/bootable.dd
 .PHONY: debug
 
 clean:
-	rm -r build/*
+	rm -r build/* stage2.map kernel.map
 .PHONY: clean

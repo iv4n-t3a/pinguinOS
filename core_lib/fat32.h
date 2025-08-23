@@ -53,9 +53,7 @@ static inline size_t fat32_fat_lba(FAT32_BPB_t *bpb) {
   return bpb->part_begin_lba + bpb->reserved_sectors;
 }
 
-static inline size_t fat32_root_dir_sectors(FAT32_BPB_t *bpb) {
-  return 0;
-}
+static inline size_t fat32_root_dir_sectors(FAT32_BPB_t *bpb) { return 0; }
 
 static inline size_t fat32_data_lba(FAT32_BPB_t *bpb) {
   return fat32_fat_lba(bpb) + bpb->sectors_per_FAT * bpb->FAT_count +

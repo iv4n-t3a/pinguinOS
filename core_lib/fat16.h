@@ -84,4 +84,8 @@ static inline size_t fat16_get_cluster_lba(FAT16_BPB_t *bpb, size_t cluster) {
   return fat16_data_lba(bpb) + (cluster - 2) * bpb->sectors_per_cluster;
 }
 
+static inline size_t fat16_bytes_per_cluster(FAT16_BPB_t *bpb) {
+  return bpb->bytes_per_sector * bpb->sectors_per_cluster;
+}
+
 #endif // #ifndef CORE_LIB_FAT16_H

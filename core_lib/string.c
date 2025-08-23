@@ -1,4 +1,5 @@
 #include "core_lib/string.h"
+#include "core_lib/vga.h"
 
 size_t strlen(const char *str) {
   size_t len = 0;
@@ -8,7 +9,7 @@ size_t strlen(const char *str) {
   return len;
 }
 
-void itos(uint32_t num, char* str) {
+void itos(uint32_t num, char *str) {
   for (size_t i = 0; i < 8; ++i) {
     char digit = (num >> (28 - i * 4)) & 0xF;
 
@@ -23,7 +24,7 @@ void itos(uint32_t num, char* str) {
   str[8] = '\0';
 }
 
-bool strcmp(const char* str1, const char* str2, size_t size) {
+bool strcmp(const char *str1, const char *str2, size_t size) {
   for (size_t i = 0; i < size; ++i) {
     if (str1[i] != str2[i]) {
       return false;
@@ -40,4 +41,11 @@ void *memcpy(char *dst, const char *src, size_t count) {
     dst[i] = src[i];
   }
   return dst;
+}
+
+void *memset(void *mem, int val, size_t count) {
+  for (size_t i = 0; i < count; ++i) {
+    *(char *)(mem + i) = val;
+  }
+  return mem;
 }
