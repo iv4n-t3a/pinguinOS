@@ -1,9 +1,23 @@
 #include "boot/stage2/error.h"
 
 #include "core_lib/vga.h"
+#include "error.h"
+
+void trace_error(error_t error, const char *file, const char *func, int line) {
+  if (!error) {
+    return;
+  }
+  terminal_writestring("Error trace: ");
+  terminal_writestring(file);
+  terminal_putchar(':');
+  terminal_writestring(func);
+  terminal_putchar(':');
+  terminal_writeint(line);
+  terminal_line_break();
+}
 
 void error_log(error_t error) {
-  terminal_writestring("STAGE2: ");
+  terminal_writestring("STAGE2 error: ");
 
   switch (error) {
   case ERR_SUCCESS:
@@ -39,6 +53,9 @@ void error_log(error_t error) {
     break;
   case ERR_KERNEL_EXITED:
     terminal_writestring("Error. Run kernel elf shall never return.\n");
+    break;
+  case ERR_TERMINAL_CLUSTER_READ_ATTEMPT:
+    terminal_writestring("Error. Attempt to read terminal FAT cluster.\n");
     break;
   default:
     terminal_writestring("Unknown error.\n");

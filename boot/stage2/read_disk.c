@@ -14,14 +14,14 @@ error_t load_sector(int drive, uint64_t lba) {
   DAPack dap;
 
   if (init_DAPack(&dap, buffer, lba, 1)) {
-    return ERR_DAPACK_INIT_ERROR;
+    return NEW_ERR(ERR_DAPACK_INIT_ERROR);
   }
 
   if (BIOS_read_disk(&dap, drive)) {
-    return ERR_BIOS_CALL_ERROR;
+    return NEW_ERR(ERR_BIOS_CALL_ERROR);
   }
 
-  return ERR_SUCCESS;
+  return NEW_ERR(ERR_SUCCESS);
 }
 
 error_t read_disk(int drive, void *dst, uint64_t lba, uint16_t sectors) {
@@ -31,5 +31,5 @@ error_t read_disk(int drive, void *dst, uint64_t lba, uint16_t sectors) {
     dst += READ_DISK_MEDIATOR_BUFFER_SIZE;
   }
 
-  return ERR_SUCCESS;
+  return NEW_ERR(ERR_SUCCESS);
 }

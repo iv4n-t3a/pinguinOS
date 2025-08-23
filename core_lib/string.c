@@ -10,18 +10,25 @@ size_t strlen(const char *str) {
 }
 
 void itos(uint32_t num, char *str) {
-  for (size_t i = 0; i < 8; ++i) {
-    char digit = (num >> (28 - i * 4)) & 0xF;
-
-    if (digit <= 9) {
-      str[i] = digit + '0';
-    } else if (digit <= 15) {
-      str[i] = digit + 'A' - 10;
-    } else {
-      str[i] = 'n';
-    }
+  if (num == 0) {
+    str[0] = '0';
+    str[1] = '\0';
+    return;
   }
-  str[8] = '\0';
+
+  uint32_t denum = 1;
+
+  while (num / denum >= 10) {
+    denum *= 10;
+  }
+
+  size_t i = 0;
+  while (denum != 0) {
+    str[i] = num / denum % 10 + '0';
+    denum /= 10;
+    i += 1;
+  }
+  str[i] = '\0';
 }
 
 bool strcmp(const char *str1, const char *str2, size_t size) {

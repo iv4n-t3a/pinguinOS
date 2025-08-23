@@ -24,13 +24,13 @@ error_t FAT_init(int drive, MBR_partition_entry_t *entry) {
   ERR_HANDLE_SUBROUTINE(read_disk(drive, vbr_buffer, entry->starting_LBA, 1));
 
   if (*(uint16_t *)(vbr_buffer + k_MBR_signature_offset) != k_MBR_signature) {
-    return ERR_SIGNATURE_VERIFICATION_FAILED;
+    return NEW_ERR(ERR_SIGNATURE_VERIFICATION_FAILED);
   }
 
   bpb = (FAT16_BPB_t *)vbr_buffer;
 
   if (FAT_BUFFER_SIZE % bpb->bytes_per_sector != 0) {
-    return ERR_INCOMPATIBLE_BUFFER_SIZE;
+    return NEW_ERR(ERR_INCOMPATIBLE_BUFFER_SIZE);
   }
 
   memset(root_dir, 0, sizeof(root_dir));
@@ -47,12 +47,16 @@ error_t FAT_next_cluster(FAT_cluster_t *cluster) {
   }
 
   *cluster = fat_buffer[location_in_fat_buffer];
-  return ERR_SUCCESS;
+  return NEW_ERR(ERR_SUCCESS);
 }
 
 error_t FAT_load_cluster(FAT_cluster_t cluster, void *buffer) {
+  if (cluster > k_fat16_final_cluster) {
+    return NEW_ERR(ERR_TERMINAL_CLUSTER_READ_ATTEMPT);
+  }
+
   if (buffer == transfer_buffer && cluster == loaded_cluster) {
-    return ERR_SUCCESS;
+    return NEW_ERR(ERR_SUCCESS);
   }
 
   ERR_HANDLE_SUBROUTINE(read_disk(current_drive, buffer,
@@ -63,7 +67,7 @@ error_t FAT_load_cluster(FAT_cluster_t cluster, void *buffer) {
     loaded_cluster = cluster;
   }
 
-  return ERR_SUCCESS;
+  return NEW_ERR(ERR_SUCCESS);
 }
 
 error_t FAT_open(FAT_file_t *file, char *name) {
@@ -80,7 +84,7 @@ error_t FAT_open(FAT_file_t *file, char *name) {
   }
 
   if (!dirent) {
-    return ERR_FILE_NOT_FOUND;
+    return NEW_ERR(ERR_FILE_NOT_FOUND);
   }
 
   // FAT16 don't use first_cluster_high field
@@ -89,12 +93,12 @@ error_t FAT_open(FAT_file_t *file, char *name) {
   file->pos = 0;
   file->bytes_left = dirent->file_size;
 
-  return ERR_SUCCESS;
+  return NEW_ERR(ERR_SUCCESS);
 }
 
 error_t FAT_read(FAT_file_t *file, uint8_t *buffer, size_t bytes_to_read) {
   if (fat16_bytes_per_cluster(bpb) > FAT_TRANSFER_BUFFER_SIZE) {
-    return ERR_INCOMPATIBLE_BUFFER_SIZE;
+    return NEW_ERR(ERR_INCOMPATIBLE_BUFFER_SIZE);
   }
 
   if (bytes_to_read > file->bytes_left) {
@@ -118,7 +122,7 @@ error_t FAT_read(FAT_file_t *file, uint8_t *buffer, size_t bytes_to_read) {
     file->pos += bytes_read;
 
     if (!bytes_to_read) {
-      return ERR_SUCCESS;
+      return NEW_ERR(ERR_SUCCESS);
     }
 
     ERR_HANDLE_SUBROUTINE(FAT_next_cluster(&file->cluster));
@@ -143,7 +147,7 @@ error_t FAT_read(FAT_file_t *file, uint8_t *buffer, size_t bytes_to_read) {
     file->pos += bytes_to_read;
   }
 
-  return ERR_SUCCESS;
+  return NEW_ERR(ERR_SUCCESS);
 }
 
 error_t FAT_peek(FAT_file_t file, uint8_t *buffer, size_t bytes) {
@@ -179,5 +183,5 @@ error_t FAT_seek(FAT_file_t *file, size_t bytes_to_skip) {
     file->pos += bytes_to_skip;
   }
 
-  return ERR_SUCCESS;
+  return NEW_ERR(ERR_SUCCESS);
 }

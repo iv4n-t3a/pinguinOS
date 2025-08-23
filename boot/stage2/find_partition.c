@@ -10,7 +10,7 @@ error_t find_partition(int drive, MBR_partition_table_t **pt, int *partition) {
   ERR_HANDLE_SUBROUTINE(read_disk(drive, mbr_buffer, 0, 1));
 
   if (*(uint16_t *)(mbr_buffer + k_MBR_signature_offset) != k_MBR_signature) {
-    return ERR_SIGNATURE_VERIFICATION_FAILED;
+    return NEW_ERR(ERR_SIGNATURE_VERIFICATION_FAILED);
   }
 
   *pt = (MBR_partition_table_t *)(mbr_buffer + k_MBR_partition_table_offset);
@@ -25,8 +25,8 @@ error_t find_partition(int drive, MBR_partition_table_t **pt, int *partition) {
   }
 
   if (*partition == 5) {
-    return ERR_PARTITION_NOT_FOUND;
+    return NEW_ERR(ERR_PARTITION_NOT_FOUND);
   }
 
-  return ERR_SUCCESS;
+  return NEW_ERR(ERR_SUCCESS);
 }

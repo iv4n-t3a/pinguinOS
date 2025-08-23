@@ -17,7 +17,7 @@ error_t run_elf(char *name) {
 
   // TODO: Verify other elf parameters;
   if (header.magic[0] != 0x7F) {
-    return ERR_SIGNATURE_VERIFICATION_FAILED;
+    return NEW_ERR(ERR_SIGNATURE_VERIFICATION_FAILED);
   }
 
   size_t header_table_size = header.program_header_table_entry_size *
@@ -49,5 +49,5 @@ error_t run_elf(char *name) {
   void (*main)() = (void *)header.program_entry_offset;
   main();
 
-  return ERR_SUCCESS;
+  return NEW_ERR(ERR_SUCCESS);
 }

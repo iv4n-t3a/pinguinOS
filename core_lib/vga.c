@@ -74,6 +74,13 @@ void terminal_putchar(char c) {
   }
 }
 
+void terminal_line_break() {
+    while (terminal_column < terminal_width - 1) {
+      terminal_putchar(' ');
+    }
+    terminal_putchar('\n');
+}
+
 void terminal_write(const char *data, size_t size) {
   for (size_t i = 0; i < size; i++)
     terminal_putchar(data[i]);
@@ -84,9 +91,7 @@ void terminal_writestring(const char *data) {
 }
 
 void terminal_writeint(uint32_t num) {
-  char str[9];
+  char str[11];
   itos(num, str);
-  terminal_putchar('0');
-  terminal_putchar('x');
-  terminal_write(str, 9);
+  terminal_writestring(str);
 }
