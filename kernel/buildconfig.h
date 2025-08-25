@@ -1,0 +1,6 @@
+#ifndef KERNEL_BUILDCONFIG_H
+#define KERNEL_BUILDCONFIG_H
+
+#define ARCH_X86 1
+
+#endif // #ifndef KERNEL_BUILDCONFIG_H

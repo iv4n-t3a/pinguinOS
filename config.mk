@@ -10,7 +10,7 @@ LD=${ROOT_DIR}third_party/bin/i686-elf-ld
 
 AS_FLAGS=
 CC_FLAGS=-I${ROOT_DIR} -ffreestanding
-LD_FLAGS=
+LD_FLAGS=--fatal-warnings
 
 GCC_VERSION=15.2.0
 BINUTILS_VERSION=2.45

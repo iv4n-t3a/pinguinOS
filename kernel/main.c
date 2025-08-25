@@ -1,8 +1,11 @@
-#include "core_lib/vga.h"
+#include "kernel/libs/stdio.h"
+
+void arch_init();
 
 void kmain() {
-  terminal_initialize(80, 25);
-  terminal_writestring("Hello, World!\n");
+  arch_init();
+
+  kprintf("Hello, World!");
 
   for (;;) {
   }
