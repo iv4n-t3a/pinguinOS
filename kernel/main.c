@@ -5,8 +5,6 @@ void arch_init();
 void kmain() {
   arch_init();
 
-  kprintf("Hello, World!");
-
   for (;;) {
   }
 }

@@ -1,13 +1,17 @@
 #include "core_lib/vga.h"
+#include "kernel/arch/x86/config.h"
 #include "kernel/arch/x86/gdt.h"
 #include "kernel/arch/x86/idt.h"
-#include "kernel/arch/x86/idt_handlers.h"
+#include "kernel/arch/x86/isr.h"
+#include "kernel/arch/x86/pic.h"
 
 void arch_init() {
+  terminal_initialize(k_terminal_width, k_terminal_height);
+
   GDT_load();
 
-  interrupt_gate_t default_gate = INTERRUPT_GATE(-1, default_handler);
-  IDT_load(nullptr, 0, default_gate);
+  PIC_init(PIC_MASTER_OFFSET, PIC_SLAVE_OFFSET);
+  PIC_mask_irq(k_pic_mask);
 
-  terminal_initialize(80, 25);
+  IDT_load(idt_handlers, sizeof(idt_handlers) / sizeof(idtentry_t));
 }

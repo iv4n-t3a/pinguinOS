@@ -68,11 +68,13 @@ void process_char_specifier(state_t *state, void (*pchar)(char), char c,
     int hex = va_arg(*args, int);
     print_hex(pchar, hex);
     break;
+  case 'c':
+    char c = va_arg(*args, int);
+    pchar(c);
+    break;
   case 's':
-    pchar('>');
     const char *str = va_arg(*args, char *);
     generic_putstr(pchar, str);
-    pchar('<');
     break;
   case '%':
     pchar('%');
