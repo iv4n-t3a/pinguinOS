@@ -2,7 +2,7 @@
 #define KERNEL_LIBS_STDIO_H
 
 ///////////////////////////////////////////////////////////////////////////////
-////// The following symbols shall be defined in architecture specific folders
+////// The following symbols shall be defined in architecture specific dirs
 
 // For interaction with user
 void kpchar(char);

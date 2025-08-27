@@ -32,7 +32,7 @@ tools:
 .PHONY: tools
 
 run: build/bootable.dd
-	qemu-system-i386 -drive file=build/bootable.dd,format=raw -serial mon:stdio
+	qemu-system-i386 -debugcon stdio -drive file=build/bootable.dd,format=raw
 .PHONY: run
 
 debug: build/bootable.dd

@@ -1,7 +1,7 @@
 #ifndef CORE_LIB_VGA_H
 #define CORE_LIB_VGA_H
 
-// This code is stolen from https://wiki.osdev.org/Bare_Bones
+// This code is forked from https://wiki.osdev.org/Bare_Bones
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -39,6 +39,14 @@ static inline uint16_t vga_entry(unsigned char uc, uint8_t color) {
 void terminal_initialize(size_t width, size_t height);
 
 void terminal_move_cursor(int x, int y);
+
+int terminal_get_row();
+
+int terminal_get_column();
+
+int terminal_get_width();
+
+int terminal_get_height();
 
 void terminal_clear();
 

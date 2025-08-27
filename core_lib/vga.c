@@ -1,4 +1,4 @@
-// This code is stolen from https://wiki.osdev.org/Bare_Bones
+// This code is forked from https://wiki.osdev.org/Bare_Bones
 
 #include "core_lib/vga.h"
 
@@ -30,14 +30,21 @@ void terminal_move_cursor(int x, int y) {
   terminal_column = y;
 }
 
+int terminal_get_row() { return terminal_row; }
+
+int terminal_get_column() { return terminal_column; }
+
+int terminal_get_width() { return terminal_width; }
+
+int terminal_get_height() { return terminal_height; }
+
 void terminal_clear() {
   terminal_row = 0;
   terminal_column = 0;
 
   for (size_t y = 0; y < terminal_height; y++) {
     for (size_t x = 0; x < terminal_width; x++) {
-      const size_t index = y * terminal_width + x;
-      terminal_buffer[index] = vga_entry(' ', terminal_color);
+      terminal_putentryat(' ', terminal_color, x, y);
     }
   }
 }
@@ -50,35 +57,45 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y) {
 }
 
 void terminal_putchar(char c) {
-  if (c == '\0') {
-    return;
-  }
-
-  if (c == '\r') {
+  switch (c) {
+  case '\0':
+    break;
+  case '\b':
+    if (terminal_column == 0) {
+      terminal_column = terminal_width;
+      if (terminal_row != 0) {
+        terminal_row -= 1;
+      }
+    } else {
+      terminal_column -= 1;
+    }
+    terminal_putentryat(' ', terminal_color, terminal_column, terminal_row);
+    break;
+  case '\r':
     terminal_column = 0;
-    return;
-  }
-
-  if (c == '\n') {
+    break;
+  case '\n':
     ++terminal_row;
     terminal_row %= terminal_height;
     terminal_column = 0;
-    return;
-  }
-
-  terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
-  if (++terminal_column == terminal_width) {
-    terminal_column = 0;
-    if (++terminal_row == terminal_height)
-      terminal_row = 0;
+    break;
+  default:
+    terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
+    if (++terminal_column == terminal_width) {
+      terminal_column = 0;
+      if (++terminal_row == terminal_height) {
+        terminal_row = 0;
+      }
+    }
+    break;
   }
 }
 
 void terminal_line_break() {
-    while (terminal_column < terminal_width - 1) {
-      terminal_putchar(' ');
-    }
-    terminal_putchar('\n');
+  while (terminal_column < terminal_width - 1) {
+    terminal_putchar(' ');
+  }
+  terminal_putchar('\n');
 }
 
 void terminal_write(const char *data, size_t size) {
