@@ -13,7 +13,7 @@ void trace_error(error_t error, const char *file, const char *func, int line) {
   terminal_writestring(func);
   terminal_putchar(':');
   terminal_writeint(line);
-  terminal_line_break();
+  terminal_putchar('\n');
 }
 
 void error_log(error_t error) {

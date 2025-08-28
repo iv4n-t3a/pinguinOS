@@ -25,6 +25,8 @@ void terminal_initialize(size_t width, size_t height) {
   terminal_clear();
 }
 
+int coordinates_to_index(int x, int y) { return y * terminal_width + x; }
+
 void terminal_move_cursor(int x, int y) {
   terminal_row = x;
   terminal_column = y;
@@ -42,8 +44,8 @@ void terminal_clear() {
   terminal_row = 0;
   terminal_column = 0;
 
-  for (size_t y = 0; y < terminal_height; y++) {
-    for (size_t x = 0; x < terminal_width; x++) {
+  for (size_t x = 0; x < terminal_width; ++x) {
+    for (size_t y = 0; y < terminal_height; ++y) {
       terminal_putentryat(' ', terminal_color, x, y);
     }
   }
@@ -52,8 +54,7 @@ void terminal_clear() {
 void terminal_setcolor(uint8_t color) { terminal_color = color; }
 
 void terminal_putentryat(char c, uint8_t color, size_t x, size_t y) {
-  const size_t index = y * terminal_width + x;
-  terminal_buffer[index] = vga_entry(c, color);
+  terminal_buffer[coordinates_to_index(x, y)] = vga_entry(c, color);
 }
 
 void terminal_putchar(char c) {
@@ -76,26 +77,37 @@ void terminal_putchar(char c) {
     break;
   case '\n':
     ++terminal_row;
-    terminal_row %= terminal_height;
     terminal_column = 0;
+
+    if (terminal_row == terminal_height) {
+      terminal_scroll_down();
+    }
     break;
   default:
     terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
     if (++terminal_column == terminal_width) {
       terminal_column = 0;
       if (++terminal_row == terminal_height) {
-        terminal_row = 0;
+        terminal_scroll_down();
       }
     }
     break;
   }
 }
 
-void terminal_line_break() {
-  while (terminal_column < terminal_width - 1) {
-    terminal_putchar(' ');
+void terminal_scroll_down() {
+  for (size_t x = 0; x < terminal_width; ++x) {
+    for (size_t y = 1; y < terminal_height; ++y) {
+      terminal_buffer[coordinates_to_index(x, y - 1)] =
+          terminal_buffer[coordinates_to_index(x, y)];
+    }
   }
-  terminal_putchar('\n');
+
+  for (size_t x = 0; x < terminal_width; ++x) {
+    terminal_putentryat(' ', terminal_color, x, terminal_height - 1);
+  }
+
+  terminal_row -= 1;
 }
 
 void terminal_write(const char *data, size_t size) {
