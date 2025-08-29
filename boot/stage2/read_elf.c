@@ -1,4 +1,4 @@
-#include "boot/stage2/run_elf.h"
+#include "boot/stage2/read_elf.h"
 
 #include "boot/stage2/fat.h"
 #include "core_lib/elf.h"
@@ -7,7 +7,7 @@ void sort_elf_segments(ELF_program_header32_t *segments, int count) {
   // TODO
 }
 
-error_t run_elf(char *name) {
+error_t read_elf(char *name, void **main) {
   FAT_file_t elf_file;
   ELF_header32_t header;
 
@@ -46,8 +46,7 @@ error_t run_elf(char *name) {
                                    header_table[i].memsz));
   }
 
-  void (*main)() = (void *)header.program_entry_offset;
-  main();
+  *main = (void *)header.program_entry_offset;
 
   return NEW_ERR(ERR_SUCCESS);
 }

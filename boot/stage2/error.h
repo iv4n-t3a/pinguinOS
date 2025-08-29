@@ -14,6 +14,7 @@ typedef enum {
   ERR_UNIMPLEMENTED,
   ERR_KERNEL_EXITED,
   ERR_TERMINAL_CLUSTER_READ_ATTEMPT,
+  ERR_BUFFER_OVERFLOW
 } error_t;
 
 #define NEW_ERR(err) trace_error(err, __FILE__, __func__, __LINE__), err

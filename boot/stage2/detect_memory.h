@@ -1,0 +1,11 @@
+#ifndef BOOT_STAGE2_DETECT_MEMORY_H
+#define BOOT_STAGE2_DETECT_MEMORY_H
+
+#include <stddef.h>
+
+#include "boot/stage2/error.h"
+#include "core_lib/boot_params.h"
+
+error_t detect_memory(x86_mementry_t *entries, size_t buffer_size, size_t *regions_found);
+
+#endif // #ifndef BOOT_STAGE2_DETECT_MEMORY_H

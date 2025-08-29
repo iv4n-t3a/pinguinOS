@@ -4,6 +4,7 @@
 #include "kernel/arch/x86/bochs.h"
 #include "kernel/arch/x86/config.h"
 #include "kernel/arch/x86/io.h"
+#include "kernel/config.h"
 
 typedef enum {
   VGA_UPDATE_CURSOR_LOW = 0x0F,
@@ -25,4 +26,11 @@ void kpchar(char c) {
 
 // Use e9 port hack for debug logs
 // TODO(not necessary): kernel logs to spi
-void dpchar(char c) { bochs_e9_pchar(c); }
+
+void dpchar(char c) {
+#if LOGS_TO_STDOUT
+  kpchar(c);
+#else
+  bochs_e9_pchar(c);
+#endif
+}

@@ -3,6 +3,6 @@
 
 #include "boot/stage2/error.h"
 
-error_t run_elf(char *name);
+error_t read_elf(char *name, void **main);
 
 #endif // #ifndef BOOT_STAGE2_RUN_ELF_H
