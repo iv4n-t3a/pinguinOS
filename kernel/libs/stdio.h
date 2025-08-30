@@ -17,4 +17,8 @@ void kputstr(const char *str);
 
 void kprintf(const char *str, ...);
 
+void dputstr(const char *str);
+
+void dprintf(const char *str, ...);
+
 #endif // #ifndef KERNEL_LIBS_STDIO_H

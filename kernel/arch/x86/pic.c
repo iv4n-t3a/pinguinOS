@@ -58,8 +58,7 @@ int PIC_get_irq_number(int ocw3) {
     result += 1;
 
     if (result == 0) {
-      log_fatal("Can't find irq for irq reg %d", irq_reg);
-      kernel_panic();
+      KERNEL_PANIC("Can't find irq for irq reg %d\n", irq_reg);
     }
   }
 

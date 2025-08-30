@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "kernel/drivers/keyboard.h"
+#include "kernel/libs/kernel_log.h"
 #include "kernel/libs/stdio.h"
 #include "kernel/shell/shell.h"
 
@@ -33,6 +34,11 @@ typedef struct {
 
 keyboard_state_t state;
 
+void ps2_keyboard_init() {
+  state.shift = false;
+  state.caps_lock = false;
+}
+
 void ps2_command_hook(uint8_t scan_code) {
   switch (scan_code) {
   case KEY_CAPS_LOCK_PRESSED:
@@ -58,4 +64,7 @@ void ps2_command_hook(uint8_t scan_code) {
     kernel_shell_process_char(keycode);
     break;
   }
+
+  LOG_DEBUG("Ps2 command hook run. state.shift=%d, state.caps_lock=%d\n",
+            state.shift, state.caps_lock);
 }

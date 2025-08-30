@@ -12,3 +12,12 @@ void kprintf(const char *fmt, ...) {
   generic_printf(kpchar, fmt, args);
   va_end(args);
 }
+
+void dputstr(const char *str) { generic_putstr(kpchar, str); }
+
+void dprintf(const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  generic_printf(dpchar, fmt, args);
+  va_end(args);
+}
