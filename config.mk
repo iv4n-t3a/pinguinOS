@@ -4,9 +4,11 @@ BUILD_DIR := $(ROOT_DIR)build/
 TOOLCHAIN_PREFIX=${ROOT_DIR}third-party/
 TARGET=i686-elf
 
-AS=${ROOT_DIR}third_party/bin/i686-elf-as
-CC=${ROOT_DIR}third_party/bin/i686-elf-gcc
-LD=${ROOT_DIR}third_party/bin/i686-elf-ld
+GENERATE_COMPILE_COMMANDS=bear --append --
+
+AS= $(GENERATE_COMPILE_COMMANDS) ${ROOT_DIR}third_party/bin/i686-elf-as
+CC= $(GENERATE_COMPILE_COMMANDS) ${ROOT_DIR}third_party/bin/i686-elf-gcc
+LD= $(GENERATE_COMPILE_COMMANDS) ${ROOT_DIR}third_party/bin/i686-elf-ld
 
 AS_FLAGS=
 CC_FLAGS=-I${ROOT_DIR} -ffreestanding

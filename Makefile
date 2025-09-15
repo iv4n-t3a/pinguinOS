@@ -40,5 +40,6 @@ debug: build/bootable.dd
 .PHONY: debug
 
 clean:
+	find . -type f -name compile_commands.json -delete
 	rm -rf build/* stage2.map kernel.map
 .PHONY: clean

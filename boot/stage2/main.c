@@ -15,17 +15,14 @@
 #include "core_lib/vga.h"
 
 void CDECL bootmain(int boot_drive) {
-  boot_params_t params;
+  boot_params_t params = { 0 };
 
   params.boot_drive = boot_drive;
   params.stack_begin = (void *)0x8000;
 
   terminal_initialize(80, 25);
 
-  params.x86_boot_params.memory_regions_count = 0;
-  ERR_HANDLE_MAIN(detect_memory(params.x86_boot_params.memory_regions,
-                                sizeof(params.x86_boot_params.memory_regions) / sizeof(x86_mementry_t),
-                                &params.x86_boot_params.memory_regions_count));
+  ERR_HANDLE_MAIN(detect_memory(&params));
 
   MBR_partition_table_t *pt;
   int partition;

@@ -4,12 +4,14 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define MEMORY_REGIONS_BUFFER_SIZE 16
+
 typedef enum {
-  RAM_TYPE_USABLE,
-  RAM_TYPE_RESERVED,
-  RAM_TYPE_ACPI_RECLAIMABLE,
-  RAM_TYPE_ACPI_NVS,
-  RAM_TYPE_BAD_MEMORY
+  RAM_TYPE_USABLE = 1,
+  RAM_TYPE_RESERVED = 2,
+  RAM_TYPE_ACPI_RECLAIMABLE = 3,
+  RAM_TYPE_ACPI_NVS = 4,
+  RAM_TYPE_BAD_MEMORY = 5
 } x86_ram_type_t;
 
 typedef struct {
@@ -20,13 +22,21 @@ typedef struct {
 } x86_mementry_t;
 
 typedef struct {
-  x86_mementry_t memory_regions[128];
+  uint64_t base;
+  uint64_t length;
+} mementry_t;
+
+typedef struct {
+  x86_mementry_t memory_regions[MEMORY_REGIONS_BUFFER_SIZE];
   size_t memory_regions_count;
 } x86_boot_params_t;
 
 typedef struct {
   int boot_drive;
   void *stack_begin;
+
+  mementry_t free_memory_regions[MEMORY_REGIONS_BUFFER_SIZE];
+  size_t free_memory_regions_count;
 
   x86_boot_params_t x86_boot_params;
 } boot_params_t;
