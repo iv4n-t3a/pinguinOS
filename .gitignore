@@ -7,9 +7,6 @@ bochsout.txt
 stage2.map
 kernel.map
 
-**/compile_commands.json
-**/.cache
-
 third_party/gcc-*
 third_party/binutils-*
 third_party/mpc-*
