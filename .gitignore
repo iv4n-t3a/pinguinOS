@@ -1,5 +1,7 @@
-build/*
+build
+build_tests
 
+.cache
 
 .bochsrc
 bochsout.txt

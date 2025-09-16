@@ -1,9 +1,7 @@
 #!/bin/bash
 
 create_bootable() {
-    set -e
-    mkdir -p $BUILDDIR
-    cmake -S . -B $BUILDDIR -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN
+    cmake -S . -B $BUILDDIR -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN -DARCH:STRING=$ARCH -DTARGET:STRING=BOOTABLE
     make -C $BUILDDIR
     dd if=/dev/zero of=$BOOTABLE bs=1048576 count=32
     mkfs.fat -F 16 -S 512 -s 4 -R 1 -f 2 -r 512 --offset=1 $BOOTABLE
@@ -14,7 +12,9 @@ create_bootable() {
 }
 
 run_tests() {
-    echo "Unimplemented"
+    cmake -S . -B $BUILDDIR -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN -DTARGET:STRING=TESTS
+    make -C $BUILDDIR
+    ./$BUILDDIR/tests/unit_tests
 }
 
 run_qemu() {
@@ -29,11 +29,6 @@ build_tools() {
     make -C third_party
 }
 
-clean() {
-    rm -rf build
-    rm -f stage2.map kernel.map
-}
-
 show_help() {
     echo "Usage: $0 [COMMAND] [OPTION]..."
     echo ""
@@ -43,7 +38,6 @@ show_help() {
     echo "  qemu            Run in QEMU"
     echo "  bochs-debugger  Run in Bochs"
     echo "  tools           Build tools (cross-compiler, etc)"
-    echo "  clean           Clean binaries"
     echo ""
     echo "Options:"
     echo "  --arch ARCH           Target architecture (One of the following: x86)"
@@ -53,13 +47,12 @@ show_help() {
 }
 
 ARCH="x86"
-BUILDDIR="build"
 
 # Parse arguments
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        bootable|tests|qemu|bochs-debugger|tools|clean)
+        bootable|tests|qemu|bochs-debugger|tools)
             COMMAND="$1"
             shift
             ;;
@@ -91,8 +84,23 @@ if [[ -z "$COMMAND" ]]; then
     exit 1
 fi
 
+if [[ "$COMMAND" == "tests" ]]; then
+    if [[ -z "$TOOLCHAIN" ]]; then
+        TOOLCHAIN="toolchain-host.cmake"
+    fi
+
+    # Since tests use different toolchain use separate build dir
+    if [[ -z "$BUILDDIR" ]]; then
+        BUILDDIR="build_tests"
+    fi
+fi
+
 if [[ -z "$TOOLCHAIN" ]]; then
     TOOLCHAIN="toolchain-$ARCH.cmake"
+fi
+
+if [[ -z "$BUILDDIR" ]]; then
+    BUILDDIR="build"
 fi
 
 if [[ "$ARCH" != "x86" ]]; then
@@ -105,6 +113,8 @@ if [[ ! -f "$TOOLCHAIN" ]]; then
     exit 1
 fi
 
+set -e
+mkdir -p $BUILDDIR
 BOOTABLE=$BUILDDIR/bootable.dd
 
 case "$COMMAND" in
@@ -113,7 +123,7 @@ case "$COMMAND" in
         create_bootable
         ;;
     tests)
-        echo "Running tests for $ARCH"
+        echo "Running tests"
         run_tests
         ;;
     qemu)
@@ -127,10 +137,6 @@ case "$COMMAND" in
     tools)
         echo "Building tools for $ARCH"
         build_tools
-        ;;
-    clean)
-        echo "Clean binaries"
-        clean
         ;;
     *)
         show_help
