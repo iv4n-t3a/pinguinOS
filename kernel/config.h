@@ -34,5 +34,4 @@ static const char *kernel_shell_prompt = "> ";
 #error "Invalid configuration"
 #endif
 
-
 #endif // #ifndef KERNEL_BUILDCONFIG_H

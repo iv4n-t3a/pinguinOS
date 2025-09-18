@@ -1,6 +1,8 @@
-set(SOURCES kernel/mem/buddy_test.cpp)
+set(TEST_SOURCES kernel/mem/buddy_test.cpp)
 
-set(HEADERS)
+set(SOURCES ${PROJECT_SOURCE_DIR}/kernel/mem/buddy.c)
+
+set(HEADERS ${PROJECT_SOURCE_DIR}/kernel/mem/buddy.h)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -10,13 +12,10 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(googletest)
 
-add_executable(unit_tests ${SOURCES} ${HEADERS})
+add_executable(unit_tests ${TEST_SOURCES} ${SOURCES} ${HEADERS})
 
 target_include_directories(unit_tests PRIVATE ${PROJECT_SOURCE_DIR})
 
-target_link_libraries(
-  unit_tests
-  GTest::gtest_main
-)
+target_link_libraries(unit_tests GTest::gtest_main)
 include(GoogleTest)
 gtest_discover_tests(unit_tests)

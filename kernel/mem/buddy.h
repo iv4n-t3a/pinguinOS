@@ -22,9 +22,11 @@ typedef struct {
   void *freelist[BUDDY_LAYERS];
 } buddy_alloc_t;
 
-void buddy_init(buddy_alloc_t *alloc, mementry_t *reserved_regions,
-                size_t reserved_regions_count, size_t pages_availible);
+void buddy_init(buddy_alloc_t *alloc, mementry_t *free_regions,
+                size_t free_regions_count);
 
 void *buddy_alloc(buddy_alloc_t *alloc, size_t pages);
+
+void buddy_free(buddy_alloc_t *alloc, void *ptr);
 
 #endif // #ifndef KERNEL_BUDDY_H

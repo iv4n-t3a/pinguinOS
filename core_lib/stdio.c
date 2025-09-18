@@ -1,5 +1,6 @@
 #include "core_lib/stdio.h"
 
+#include <stdarg.h>
 #include <stddef.h>
 
 #include "core_lib/string.h"
@@ -45,7 +46,7 @@ void print_hex(void (*pchar)(char), int num) {
 }
 
 void process_char_normal(state_t *state, void (*pchar)(char), char c,
-                         va_list *args) {
+                         va_list args) {
   switch (c) {
   case '%':
     *state = STATE_SPECIFIER;
@@ -57,23 +58,23 @@ void process_char_normal(state_t *state, void (*pchar)(char), char c,
 }
 
 void process_char_specifier(state_t *state, void (*pchar)(char), char c,
-                            va_list *args) {
+                            va_list args) {
   switch (c) {
   case 'd':
   case 'i':
-    int num = va_arg(*args, int);
+    int num = va_arg(args, int);
     print_int(pchar, num);
     break;
   case 'x':
-    int hex = va_arg(*args, int);
+    int hex = va_arg(args, int);
     print_hex(pchar, hex);
     break;
   case 'c':
-    char c = va_arg(*args, int);
+    char c = va_arg(args, int);
     pchar(c);
     break;
   case 's':
-    const char *str = va_arg(*args, char *);
+    const char *str = va_arg(args, char *);
     generic_putstr(pchar, str);
     break;
   case '%':
@@ -85,7 +86,7 @@ void process_char_specifier(state_t *state, void (*pchar)(char), char c,
   *state = STATE_NORMAL;
 }
 
-void process_char(state_t *state, void (*pchar)(char), char c, va_list *args) {
+void process_char(state_t *state, void (*pchar)(char), char c, va_list args) {
   switch (*state) {
   case STATE_NORMAL:
     process_char_normal(state, pchar, c, args);
@@ -100,6 +101,6 @@ void generic_printf(void (*pchar)(char), const char *fmt, va_list args) {
   state_t state = STATE_NORMAL;
 
   for (size_t i = 0; fmt[i] != '\0'; ++i) {
-    process_char(&state, pchar, fmt[i], &args);
+    process_char(&state, pchar, fmt[i], args);
   }
 }

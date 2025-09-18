@@ -32,7 +32,7 @@ void set_next_free(void *free_block, void *next_free);
 // Allocator functions:
 
 void buddy_init(buddy_alloc_t *alloc, mementry_t *free_regions,
-                size_t free_regions_count, size_t pages_availible) {
+                size_t free_regions_count) {
   // Empty freelist
   for (size_t i = 0; i < BUDDY_LAYERS; ++i) {
     alloc->freelist[i] = NULL;
