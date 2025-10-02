@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "boot/stage2/compiler.h"
+#include "core_lib/compiler.h"
 
 typedef struct {
   uint8_t size;
@@ -17,7 +18,7 @@ typedef struct {
 
 static inline int init_DAPack(DAPack *dap, void *buffer, uint64_t lba,
                               uint16_t sectors) {
-  if ((uint32_t)buffer >= 0xF'FFFF) {
+  if ((uint32_t)buffer >= 0xFFFFF) {
     return 1;
   }
   dap->size = 16;
@@ -30,8 +31,8 @@ static inline int init_DAPack(DAPack *dap, void *buffer, uint64_t lba,
     dap->buffer_offset = 0xFFF0 + (uint16_t)buffer & 0xF;
     dap->buffer_segment = ((uint32_t)buffer - dap->buffer_offset) >> 4;
   }
-  dap->lba_low = lba & 0xFFFF'FFFF;
-  dap->lba_high = (lba >> 32) & 0xFFFF'FFFF;
+  dap->lba_low = lba & 0xFFFFFFFF;
+  dap->lba_high = (lba >> 32) & 0xFFFFFFFF;
   return 0;
 }
 

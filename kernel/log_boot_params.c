@@ -1,6 +1,5 @@
 #include "kernel/log_boot_params.h"
 
-#include "kernel/config.h"
 #include "kernel/libs/kernel_log.h"
 
 void log_boot_params_x86(x86_boot_params_t params) {
@@ -50,7 +49,7 @@ void log_boot_params(boot_params_t params) {
   }
   LOG_INFO_APPEND("]\n");
 
-#if ARCH_X86
+#if ARCH_x86
   log_boot_params_x86(params.x86_boot_params);
 #endif
 }

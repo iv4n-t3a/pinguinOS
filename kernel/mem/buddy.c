@@ -1,178 +1,102 @@
 #include "kernel/mem/buddy.h"
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
+#include "core_lib/string.h"
+#include "kernel/mem/buddy_util.h"
+#include "kernel/mem/freelist.h"
+#include "kernel/mem/util.h"
 
-#include "core_lib/boot_params.h"
-#include "kernel/config.h"
+void buddy_update_params(buddy_alloc_t *alloc, void *begin, void *end) {
+  alloc->blocks_count = pages_count(begin, end);
+  alloc->root_block_size = max_lower_power_of_2(alloc->blocks_count);
+  alloc->buddy_layers = log2_upper(alloc->blocks_count);
+}
 
-////////////////////////////////////////////////////////////////////////////////
-// Helpers declaration:
-
-void buddy_init_region(buddy_alloc_t *alloc, void *ptr, size_t size);
-
-bool buddy_get(buddy_alloc_t *alloc, size_t buddy, size_t index);
-
-// Mark and unmark functions updates bit for given buddy layers and all upper.
-// The highest updated layer is returned.
-size_t buddy_mark(buddy_alloc_t *alloc, size_t buddy, size_t index);
-size_t buddy_unmark(buddy_alloc_t *alloc, size_t buddy, size_t index);
-
-size_t block_size(size_t buddy);
-size_t best_fit_buddy(size_t pages);
-
-void *to_pointer(size_t buddy, size_t index);
-size_t to_index(size_t buddy, void *pointer);
-
-void *get_next_free(void *free_block);
-void set_next_free(void *free_block, void *next_free);
-
-////////////////////////////////////////////////////////////////////////////////
-// Allocator functions:
-
-void buddy_init(buddy_alloc_t *alloc, mementry_t *free_regions,
-                size_t free_regions_count) {
-  // Empty freelist
-  for (size_t i = 0; i < BUDDY_LAYERS; ++i) {
-    alloc->freelist[i] = NULL;
+buddy_alloc_t *buddy_init(void *begin, void *end) {
+  if (pages_count(begin, end) < 16) {
+    return NULL;
   }
 
-  // Mark all pages as used
-  for (size_t i = 0; i < BUDDY_BITMAP_SIZE; ++i) {
-    alloc->bitmap[i] = 0xFF;
-  }
+  buddy_alloc_t *alloc = begin;
+  begin += sizeof(buddy_alloc_t);
 
-  for (size_t i = 0; i < free_regions_count; ++i) {
-    buddy_init_region(alloc, (void *)free_regions[i].base,
-                      free_regions[i].length);
-  }
+  buddy_update_params(alloc, begin, end);
+
+  alloc->freelist = begin;
+  begin = (uint8_t *)begin + alloc->buddy_layers * sizeof(freelist_t);
+
+  alloc->bitmap = begin;
+  begin = (uint8_t *)begin + buddy_bitmap_size(alloc->blocks_count);
+
+  // Update after begin move
+  begin = page_size_align_up(begin);
+  end = page_size_align_down(end);
+  buddy_update_params(alloc, begin, end);
+
+  pos_memset(alloc->freelist, 0, alloc->buddy_layers * sizeof(freelist_t));
+  pos_memset(alloc->bitmap, 0xFF, buddy_bitmap_size(alloc->blocks_count));
+
+  freelist_push(&alloc->freelist[0], begin);
+  buddy_unset(alloc->bitmap, 0, 0);
+
+  alloc->begin = begin;
+
+  return alloc;
 }
 
 void *buddy_alloc(buddy_alloc_t *alloc, size_t pages) {
-  for (int buddy = best_fit_buddy(pages); buddy >= 0; --buddy) {
-    void *block = alloc->freelist[buddy];
+  size_t bf_layer = best_fit_layer(pages, alloc->root_block_size);
+  size_t layer = bf_layer;
 
-    if (block == NULL) {
-      continue;
-    }
-
-    alloc->freelist[buddy] = get_next_free(block);
-    buddy_mark(alloc, buddy, to_index(buddy, block));
-    return block;
+  while (layer > 0 && freelist_get(alloc->freelist[layer]) == NULL) {
+    layer -= 1;
   }
 
-  return NULL;
+  void *ptr = freelist_pop(&alloc->freelist[layer]);
+
+  if (ptr == NULL) {
+    return NULL;
+  }
+
+  size_t index = to_index(alloc->begin, layer, ptr, alloc->root_block_size);
+
+  while (layer < bf_layer) {
+    buddy_set(alloc->bitmap, layer, index);
+
+    layer += 1;
+    index = index * 2;
+
+    buddy_unset(alloc->bitmap, layer, index);
+    buddy_set(alloc->bitmap, layer, index + 1);
+
+    void *freed =
+        to_pointer(alloc->begin, layer, index + 1, alloc->root_block_size);
+    freelist_push(&alloc->freelist[layer], freed);
+  }
+
+  return ptr;
 }
 
 void buddy_free(buddy_alloc_t *alloc, void *ptr) {
-  int buddy = BUDDY_LAYERS - 1;
+  int layer = alloc->buddy_layers - 1;
+  int index = to_index(alloc->begin, layer, ptr, alloc->root_block_size);
 
-  while (!buddy_get(alloc, buddy, to_index(buddy, ptr))) {
-    buddy -= 1;
+  while (layer > 0 && buddy_get(alloc->bitmap, layer, index)) {
+    layer -= 1;
+    index /= 2;
   }
 
-  buddy = buddy_unmark(alloc, buddy, to_index(buddy, ptr));
+  buddy_unset(alloc->bitmap, layer, index);
 
-  set_next_free(ptr, alloc->freelist[buddy]);
-  alloc->freelist[buddy] = ptr;
-}
+  while (layer > 0 && !buddy_get(alloc->bitmap, layer, index ^ 1)) {
+    buddy_set(alloc->bitmap, layer, index);
+    buddy_set(alloc->bitmap, layer, index ^ 1);
 
-////////////////////////////////////////////////////////////////////////////////
-// Helpers definition:
+    layer -= 1;
+    index /= 2;
 
-void buddy_init_region(buddy_alloc_t *alloc, void *ptr, size_t size) {
-  // Page size align
-  size += (size_t)ptr % PAGE_SIZE;
-  ptr -= (size_t)ptr % PAGE_SIZE;
-
-  size_t pages = (size + PAGE_SIZE - 1) / PAGE_SIZE;
-  size_t buddy = best_fit_buddy(pages);
-  size_t index = to_index(buddy, ptr);
-
-  if (pages < block_size(buddy)) {
-    buddy += 1;
+    buddy_unset(alloc->bitmap, layer, index);
   }
 
-  while (pages) {
-    buddy_unmark(alloc, buddy, index);
-    pages -= block_size(buddy);
-    buddy += 1;
-    index = (index + 1) * 2;
-  }
-}
-
-// Returns index of 8-bit mask containing value for desired index in buddy
-size_t mask_index(size_t buddy, size_t index) {
-  if (index < 3) {
-    return 0;
-  }
-
-  size_t buddy_start =
-      1 << (buddy - 3); // Skip first 3 buddies as they occupy first byte
-  return buddy_start + index / sizeof(uint8_t);
-}
-
-// Returns index of required bit in mask_index result
-size_t bit_index(size_t buddy, size_t index) {
-  if (buddy < 3) { // 1-bit padding
-    return index - 1;
-  }
-
-  return index % sizeof(uint8_t);
-}
-
-// Returns mask for required bit in mask_index result
-uint8_t bit_mask(size_t buddy, size_t index) {
-  return 1 << bit_index(buddy, index);
-}
-
-bool buddy_get(buddy_alloc_t *alloc, size_t buddy, size_t index) {
-  return alloc->bitmap[mask_index(buddy, index)] & bit_mask(buddy, index);
-}
-
-size_t buddy_mark(buddy_alloc_t *alloc, size_t buddy, size_t index) {
-  alloc->bitmap[mask_index(buddy, index)] |= bit_mask(buddy, index);
-
-  // TODO: Check if compiler optimize this recursion. Turn into cycle if needed
-  if (buddy != 0 && buddy_get(alloc, buddy, index ^ 1)) {
-    return buddy_mark(alloc, buddy - 1, index / 2);
-  }
-
-  return buddy;
-}
-
-size_t buddy_unmark(buddy_alloc_t *alloc, size_t buddy, size_t index) {
-  alloc->bitmap[mask_index(buddy, index)] &= ~bit_mask(buddy, index);
-
-  if (buddy != 0 && !buddy_get(alloc, buddy, index ^ 1)) {
-    return buddy_unmark(alloc, buddy - 1, index / 2);
-  }
-
-  return buddy;
-}
-
-size_t block_size(size_t buddy) { return (BUDDY_MAX_BLOCK_SIZE >> buddy) + 1; }
-
-size_t best_fit_buddy(size_t pages) {
-  for (size_t i = 1; block_size(i) < BUDDY_MAX_BLOCK_SIZE; ++i) {
-    if (block_size(i) < pages) {
-      return i - 1;
-    }
-  }
-  return 0;
-}
-
-void *to_pointer(size_t buddy, size_t index) {
-  return (void *)(block_size(buddy) * index * PAGE_SIZE);
-}
-
-size_t to_index(size_t buddy, void *pointer) {
-  return (size_t)pointer / block_size(buddy) / PAGE_SIZE;
-}
-
-void *get_next_free(void *free_block) { return *(void **)free_block; }
-
-void set_next_free(void *free_block, void *next_free) {
-  *(void **)free_block = next_free;
+  ptr = to_pointer(alloc->begin, layer, index, alloc->root_block_size);
+  freelist_push(&alloc->freelist[layer], ptr);
 }

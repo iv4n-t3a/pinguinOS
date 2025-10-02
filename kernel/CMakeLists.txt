@@ -9,6 +9,9 @@ set(HEADERS
     libs/kernel_panic.h
     libs/stdio.h
     mem/buddy.h
+    mem/buddy_util.h
+    mem/freelist.h
+    mem/util.h
     log_boot_params.h
     shell/shell.h)
 
@@ -31,6 +34,9 @@ set(SOURCES
     libs/stdio.c
     log_boot_params.c
     mem/buddy.c
+    mem/buddy_util.c
+    mem/freelist.c
+    mem/util.c
     main.c
     shell/shell.c)
 

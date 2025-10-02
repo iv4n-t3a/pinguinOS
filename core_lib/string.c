@@ -1,5 +1,4 @@
 #include "core_lib/string.h"
-#include "core_lib/vga.h"
 
 size_t strlen(const char *str) {
   size_t len = 0;
@@ -50,7 +49,7 @@ void *memcpy(char *dst, const char *src, size_t count) {
   return dst;
 }
 
-void *memset(void *mem, int val, size_t count) {
+void *memset(void *mem, uint8_t val, size_t count) {
   for (size_t i = 0; i < count; ++i) {
     *(char *)(mem + i) = val;
   }

@@ -7,9 +7,9 @@ mkimage() {
 }
 
 run_tests() {
-    cmake -S . -B $BUILDDIR -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN -DTARGET:STRING=TESTS
+    cmake -S . -B $BUILDDIR -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN -DTARGET:STRING=TESTS -DARCH:STRING=$ARCH
     make -C $BUILDDIR
-    ./$BUILDDIR/tests/unit_tests
+    ./$BUILDDIR/tests/unit_tests --gtest_color=yes
 }
 
 run_qemu() {
@@ -81,14 +81,17 @@ fi
 
 if [[ "$COMMAND" == "tests" ]]; then
     ARCH="debug"
+    if [[ -z "$BUILDDIR" ]]; then
+        BUILDDIR="build_tests"
+    fi
 fi
 
 if [[ -z "$TOOLCHAIN" ]]; then
-    TOOLCHAIN="toolchain-$ARCH.cmake"
+    TOOLCHAIN="toolchain_$ARCH.cmake"
 fi
 
 if [[ -z "$BUILDDIR" ]]; then
-    BUILDDIR="build-$ARCH"
+    BUILDDIR="build_$ARCH"
 fi
 
 if [[ "$ARCH" != "x86" && "$ARCH" != "debug" ]]; then
@@ -99,6 +102,10 @@ fi
 if [[ ! -f "$TOOLCHAIN" ]]; then
     echo "Error: Toolchain file '$TOOLCHAIN' does not exist."
     exit 1
+fi
+
+if [[ -z "$BOOTABLE" ]]; then
+    BOOTABLE=$BUILDDIR/bootable.dd
 fi
 
 set -e

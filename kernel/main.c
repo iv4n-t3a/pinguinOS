@@ -10,6 +10,8 @@ void arch_init(boot_params_t);
 void kmain(boot_params_t params) {
   arch_init(params);
 
+  LOG_DEBUG("Testing printf... (%d %s %c = 1 str c)\n", 1, "str", 'c');
+
   LOG_INFO("Pinguin OS kernel initialized\n");
   log_boot_params(params);
 
