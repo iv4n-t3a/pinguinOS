@@ -4,8 +4,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void *page_size_align_up(void *);
-void *page_size_align_down(void *);
+void *align_addr_to_page_size_up(void *);
+void *align_addr_to_page_size_down(void *);
+
+size_t align_size_to_page_size_up(size_t);
+size_t align_size_to_page_size_down(size_t);
   
 size_t min_upper_power_of_2(size_t);
 size_t max_lower_power_of_2(size_t);

@@ -60,7 +60,7 @@ INSTANTIATE_TEST_SUITE_P(VaryingPoolSizes, BuddyTestWithVaryingPoolSize,
                                            1234));
 
 TEST(BuddyTestWithFixedPoolSize, AllocFree) {
-  size_t kPoolSize = 300 * PAGE_SIZE;
+  size_t kPoolSize = 3000 * PAGE_SIZE;
   std::unique_ptr<std::byte[]> pool(new std::byte[kPoolSize]);
   EXPECT_NE(pool.get(), nullptr);
 

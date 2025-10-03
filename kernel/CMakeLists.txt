@@ -11,6 +11,7 @@ set(HEADERS
     mem/buddy.h
     mem/buddy_util.h
     mem/freelist.h
+    mem/slab.h
     mem/util.h
     log_boot_params.h
     shell/shell.h)
@@ -36,6 +37,7 @@ set(SOURCES
     mem/buddy.c
     mem/buddy_util.c
     mem/freelist.c
+    mem/slab.c
     mem/util.c
     main.c
     shell/shell.c)

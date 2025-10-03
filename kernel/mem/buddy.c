@@ -28,8 +28,8 @@ buddy_alloc_t *buddy_init(void *begin, void *end) {
   begin = (uint8_t *)begin + buddy_bitmap_size(alloc->blocks_count);
 
   // Update after begin move
-  begin = page_size_align_up(begin);
-  end = page_size_align_down(end);
+  begin = align_addr_to_page_size_up(begin);
+  end = align_addr_to_page_size_down(end);
   buddy_update_params(alloc, begin, end);
 
   pos_memset(alloc->freelist, 0, alloc->buddy_layers * sizeof(freelist_t));

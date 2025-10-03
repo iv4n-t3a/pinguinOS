@@ -1,13 +1,16 @@
 include(FetchContent)
 
-set(TEST_SOURCES kernel/mem/buddy_test.cpp kernel/mem/buddy_util_test.cpp
-                 kernel/mem/freelist_test.cpp kernel/mem/util_test.cpp)
+set(TEST_SOURCES
+    kernel/mem/buddy_test.cpp kernel/mem/buddy_util_test.cpp
+    kernel/mem/freelist_test.cpp kernel/mem/slab_test.cpp
+    kernel/mem/util_test.cpp)
 
 set(SOURCES
     ${PROJECT_SOURCE_DIR}/kernel/arch/debug/vga.c
     ${PROJECT_SOURCE_DIR}/kernel/mem/buddy.c
     ${PROJECT_SOURCE_DIR}/kernel/mem/buddy_util.c
     ${PROJECT_SOURCE_DIR}/kernel/mem/freelist.c
+    ${PROJECT_SOURCE_DIR}/kernel/mem/slab.c
     ${PROJECT_SOURCE_DIR}/kernel/mem/util.c
     ${PROJECT_SOURCE_DIR}/kernel/libs/kernel_log.c
     ${PROJECT_SOURCE_DIR}/kernel/libs/stdio.c
@@ -17,6 +20,7 @@ set(HEADERS
     ${PROJECT_SOURCE_DIR}/kernel/mem/buddy.h
     ${PROJECT_SOURCE_DIR}/kernel/mem/buddy_util.h
     ${PROJECT_SOURCE_DIR}/kernel/mem/freelist.h
+    ${PROJECT_SOURCE_DIR}/kernel/mem/slab.h
     ${PROJECT_SOURCE_DIR}/kernel/mem/util.h
     ${PROJECT_SOURCE_DIR}/kernel/libs/kernel_log.h
     ${PROJECT_SOURCE_DIR}/kernel/libs/kernel_panic.h

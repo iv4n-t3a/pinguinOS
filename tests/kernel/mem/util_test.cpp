@@ -5,18 +5,32 @@ extern "C" {
 #include "kernel/mem/util.h"
 }
 
-TEST(MemUtilTest, AlginUpTest) {
+TEST(MemUtilTest, AlginAddrUpTest) {
   size_t expected = PAGE_SIZE * 12345;
   size_t unaligned = (size_t)expected - 123 % PAGE_SIZE;
-  void *aligned = page_size_align_up((void *)unaligned);
+  void *aligned = align_addr_to_page_size_up((void *)unaligned);
   EXPECT_EQ((void *)expected, aligned);
 }
 
-TEST(MemUtilTest, AlginDownTest) {
+TEST(MemUtilTest, AlginAddrDownTest) {
   size_t expected = PAGE_SIZE * 12345;
   size_t unaligned = (size_t)expected + 123 % PAGE_SIZE;
-  void *aligned = page_size_align_down((void *)unaligned);
+  void *aligned = align_addr_to_page_size_down((void *)unaligned);
   EXPECT_EQ((void *)expected, aligned);
+}
+
+TEST(MemUtilTest, AlginSizeUpTest) {
+  size_t expected = PAGE_SIZE * 12345;
+  size_t unaligned = (size_t)expected - 123 % PAGE_SIZE;
+  size_t aligned = align_size_to_page_size_up(unaligned);
+  EXPECT_EQ(expected, aligned);
+}
+
+TEST(MemUtilTest, AlginSizeDownTest) {
+  size_t expected = PAGE_SIZE * 12345;
+  size_t unaligned = (size_t)expected + 123 % PAGE_SIZE;
+  size_t aligned = align_size_to_page_size_down(unaligned);
+  EXPECT_EQ(expected, aligned);
 }
 
 TEST(MemUtilTest, MaxLowerPowerOf2) {

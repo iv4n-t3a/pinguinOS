@@ -19,4 +19,7 @@ static const char *kernel_shell_prompt = "> ";
 
 #define PAGE_SIZE 4096
 
+#define SLAB_MIN_CACHE_PAGES 8
+#define SLAB_MIN_CACHE_OBJECTS 8
+
 #endif // #ifndef KERNEL_BUILDCONFIG_H
